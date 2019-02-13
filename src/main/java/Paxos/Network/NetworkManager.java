@@ -1,21 +1,26 @@
-import java.util.HashMap;
+package Paxos.Network;
+
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import jdk.internal.agent.Agent;
 
 // singleton class responsable to handle all network related stuffs
-class NetworkManager implements NetworkManagerInterface{
+public class NetworkManager implements NetworkManagerInterface{
 
     // singleton instance
     private static NetworkManager instance;
 
-    private Queue<Message> inboundTrafficQueue;
-    private Queue<Messge> outboundTrafficQueue;
+    private ConcurrentLinkedQueue<Message> inboundTrafficQueue;
+    private ConcurrentLinkedQueue<Message> outboundTrafficQueue;
 
-    private HashMap<Agent, Queue<Message>> subscribedAgentsMap;
+    private ConcurrentHashMap<Agent, ConcurrentLinkedQueue<Message>> subscribedAgentsMap;
     
     private NetworkManager(){
-	this.inboundTrafficQueue = new Queue<Message>();
-	this.outboundTrafficQueue = new Queue<Message>();
-	this.subscribedAgentsMap = new Queue<Agent, Queue<Message>>();
+	this.inboundTrafficQueue = new ConcurrentLinkedQueue<Message>();
+	this.outboundTrafficQueue = new ConcurrentLinkedQueue<Message>();
+	this.subscribedAgentsMap = new ConcurrentHashMap<Agent, ConcurrentLinkedQueue<Message>>();
     }
 
     public static NetworkManager getInstance(){
@@ -37,16 +42,15 @@ class NetworkManager implements NetworkManagerInterface{
 	return this.outboundTrafficQueue;
     }
     
-    public Message dequeueMessage(){
-	
+    public Message dequeueMessage(Agent agent){
+	return this.subscribedAgentsMap.get(agent).remove();
     }
 
     public Boolean isThereAnyMessage(){
-
+	
     }
 
-    public void subscribe(){
-
+    public void subscribe(Agent agent){
+	this.subscribedAgentsMap.put(agent, new ConcurrentLinkedQueue<Message>());
     }
-    
 }

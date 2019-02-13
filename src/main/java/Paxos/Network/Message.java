@@ -1,3 +1,5 @@
+package Paxos.Network;
+
 class Message{
     private Integer ID;
     private Integer value;
