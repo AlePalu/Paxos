@@ -1,6 +1,6 @@
 package Paxos.Network;
 
-import jdk.internal.agent.Agent;
+import Paxos.Agents.*;
 
 public interface NetworkManagerInterface{
     public void enqueueMessage(Message msg);
