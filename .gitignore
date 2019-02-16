@@ -2,7 +2,17 @@
 .gradle
 
 # Ignore Gradle build output directory
-build
+/build/
+
+# Ignore eclipse specific configuration file
+.project
+.classpath
+.settings
+
+# Ignore all bin directories
+bin/
+
+
 
 ### Intellij ###
 
