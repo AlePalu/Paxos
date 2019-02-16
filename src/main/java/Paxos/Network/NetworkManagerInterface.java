@@ -1,6 +1,6 @@
 package Paxos.Network;
 
-import Paxos.Agents.*;
+import Paxos.Agents.Agent;
 
 public interface NetworkManagerInterface{
     public void enqueueMessage(Message msg);
