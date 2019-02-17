@@ -4,7 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import jdk.internal.agent.Agent;
+import Paxos.Agents.Agent;
 
 // singleton class responsable to handle all network related stuffs
 public class NetworkManager implements NetworkManagerInterface{
@@ -46,8 +46,8 @@ public class NetworkManager implements NetworkManagerInterface{
 	return this.subscribedAgentsMap.get(agent).remove();
     }
 
-    public Boolean isThereAnyMessage(){
-	
+    public Boolean isThereAnyMessage(Agent agent){
+	return !this.subscribedAgentsMap.get(agent).isEmpty();
     }
 
     public void subscribe(Agent agent){

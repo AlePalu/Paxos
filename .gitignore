@@ -1,11 +1,26 @@
 # Ignore Gradle project-specific cache directory
-.gradle
+.gradle/
+gradle/
 
 # Ignore Gradle build output directory
-build
+/build/
 
-### Intellij ###
+# Ignore gradle scripts
+gradlew*
 
+# Ignore eclipse specific configuration file
+.project
+.classpath
+.settings
+
+# Ignore all bin directories
+bin/
+
+# Ignore temporary files
+.settings/
+
+# editor specific ignores
+# Intellij
 .idea/
 
 # File-based project format
@@ -17,7 +32,7 @@ out/
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
-### Emacs ###
+# Emacs
 *~
 \#*\#
 .\#*
