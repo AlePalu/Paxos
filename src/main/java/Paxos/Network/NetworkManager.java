@@ -50,7 +50,6 @@ public class NetworkManager implements NetworkManagerInterface{
 	return !this.subscribedAgentsMap.get(agent).isEmpty();
     }
 
-    public void subscribe(Agent agent){
-	this.subscribedAgentsMap.put(agent, new ConcurrentLinkedQueue<Message>());
+    public void subscribe(Agent agent){this.subscribedAgentsMap.put(agent, new ConcurrentLinkedQueue<Message>());
     }
 }

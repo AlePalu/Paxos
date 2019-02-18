@@ -1,14 +1,15 @@
 package Paxos.Agents;
 
+import Paxos.Network.MessageType;
 import Paxos.Network.NetworkManager;
 import Paxos.Network.Message;
 
+import java.awt.*;
 import java.util.Random;
 
 
 public class Proposer extends Agent {
     private int numOfProces;
-    private NetworkManager n = NetworkManager.getInstance();
 
 
     private Integer getId(){
@@ -18,14 +19,10 @@ public class Proposer extends Agent {
     }
 
 
-    public void makePropose(Integer val){
-        Message m = new Message(getId(),val);
-        n.enqueueMaessage(m);
+    Message makePropose(Integer val){
+        return new Message(getId(),val, MessageType.BROADCAST);
     }
 
-    public static void main(String[] args){
-        Proposer p = new Proposer();
-        p.getId();
-    }
+
 
 }
