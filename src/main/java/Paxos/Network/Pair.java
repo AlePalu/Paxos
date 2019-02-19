@@ -17,5 +17,9 @@ class Pair<TypeA,TypeB>{
     public TypeB getSecond(){
 	return this.second;
     }
+
+    public String toString(){
+	return this.first.toString() + " - " + this.second.toString();
+    }
     
 }

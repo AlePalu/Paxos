@@ -1,10 +1,10 @@
 package Paxos.Network;
 
-import Paxos.Agents.Agent;
+import java.io.IOException;
 
 public interface NetworkManagerInterface{
     public void enqueueMessage(Message msg);
-    public Message dequeueMessage(Agent agent);
-    public Boolean isThereAnyMessage(Agent agent);
-    public void subscribe(Agent agent);
+    public Message dequeueMessage(long pid);
+    public Boolean isThereAnyMessage(long pid);
+    public void subscribeProcess(long pid) throws IOException;
 }

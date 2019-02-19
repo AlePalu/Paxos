@@ -1,3 +1,5 @@
+package Paxos.Network;
+
 import java.net.InetAddress;
 import java.util.concurrent.ConcurrentHashMap;
 

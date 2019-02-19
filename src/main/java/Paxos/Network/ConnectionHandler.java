@@ -18,6 +18,13 @@ class ConnectionHandler implements Runnable{
 
     // thread routine
     public void run(){
+
+	System.out.printf("Server is up\n");
+	// start thread for queue handling
+	PostmanSocket postmanSocket = new PostmanSocket();
+	Thread postmanThread = new Thread(postmanSocket);
+	postmanThread.start();
+
 	while(true){
 	    try{
 		// waiting for new connection
@@ -26,6 +33,8 @@ class ConnectionHandler implements Runnable{
 		SocketBox socketBox = new SocketBox(newSocket);
 		// add the client to the opened socket registry
 		Pair<InetAddress, Integer> clientIdentifier = new Pair(newSocket.getInetAddress(), newSocket.getPort()); // remote client process identifier
+		System.out.printf("client connected to:" + clientIdentifier.toString());
+		
 		try{
 		    SocketRegistry.getInstance().addElement(clientIdentifier, socketBox); // bind the remote process to the just opened socket
 		}catch(IllegalStateException exception){
