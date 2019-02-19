@@ -14,11 +14,19 @@ class PostmanSocket implements Runnable{
 	    if(!NetworkManager.getInstance().getOutboundTrafficQueue().isEmpty()){
 		// getting message from queue
 		Message outMessage = NetworkManager.getInstance().getOutboundTrafficQueue().remove();
-		SocketBox outSocket = SocketRegistry.getInstance().getRegistry().get(outMessage.getRecipient());
-		// sending message
-		PrintWriter tmpPrintWriter = SocketRegistry.getInstance().getRegistry().get(outMessage.getRecipient()).getOutputStream(); // this works for reply
-		tmpPrintWriter.println(outMessage.getJSON());
-		tmpPrintWriter.flush();
+		if(outMessage.getMessageType().equals(MessageType.BROADCAST)){ // message must be sent to all process on network
+		    for(SocketBox outSocket : SocketRegistry.getInstance().getRegistry().values()){
+			PrintWriter tmpPrintWriter = outSocket.getOutputStream();
+			tmpPrintWriter.println(outMessage.getJSON());
+			tmpPrintWriter.flush();
+		    }
+		}else{ // unicast
+		    SocketBox outSocket = SocketRegistry.getInstance().getRegistry().get(outMessage.getRecipient());
+		    // sending message
+		    PrintWriter tmpPrintWriter = SocketRegistry.getInstance().getRegistry().get(outMessage.getRecipient()).getOutputStream(); // this works for reply
+		    tmpPrintWriter.println(outMessage.getJSON());
+		    tmpPrintWriter.flush();
+		}
 	    }
 
 	    // inbound traffic, checks if there is some message pending on opened sockets and insert into inboundQueue
