@@ -33,11 +33,11 @@ class ConnectionHandler implements Runnable{
 		SocketBox socketBox = new SocketBox(newSocket);
 		// add the client to the opened socket registry
 		Pair<InetAddress, Integer> clientIdentifier = new Pair(newSocket.getInetAddress(), newSocket.getPort()); // remote client process identifier
-		System.out.printf("client connected to:" + clientIdentifier.toString());
-		
+		System.out.printf("client connected to:" + clientIdentifier.toString()+"\n");		
 		try{
 		    SocketRegistry.getInstance().addElement(clientIdentifier, socketBox); // bind the remote process to the just opened socket
 		}catch(IllegalStateException exception){
+		    System.out.printf("ERROR%n");
 		    return; // this socket has already been binded to a remote process
 		}
 	    }catch(IOException exception){

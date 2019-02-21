@@ -5,7 +5,22 @@ import java.net.InetAddress;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
-class Message{
+enum ForwardDirection{
+    IN("IN"),
+    OUT("OUT");
+
+    private final String direction;
+
+    private ForwardDirection(String direction){
+	this.direction = direction;
+    }
+
+    public String toString(){
+	return this.direction;
+    }
+}
+
+public class Message{
     // paxos related informations
     private Integer ID;
     private Integer value;
@@ -14,6 +29,8 @@ class Message{
     private MessageType messageType; // specify if the message must be considered as unicast or broadcast one
     private Pair<InetAddress, Integer> recipient; // needed for reply
     private String agentType; // type of agent to which this message is directed
+    private ForwardDirection forwardDirection;
+
     
     public Message(Integer ID, Integer value, MessageType type, AgentType agentType, Pair<InetAddress,Integer> sender){
 	this.ID = ID;
@@ -32,6 +49,13 @@ class Message{
 	
 	// keeping track of the sender... needed for reply
 	this.recipient = sender;
+    }
+
+    public Message(String message){
+	JsonObject jsonMessage = Json.parse(message).asObject();
+	this.ID = jsonMessage.get("ID").asInt();
+	this.value = jsonMessage.get("value").asInt();
+	this.agentType = jsonMessage.get("agentType").asString();
     }
     
     public Integer getID(){
@@ -53,12 +77,21 @@ class Message{
     public String getAgentType(){
 	return this.agentType;
     }
+
+    public void setForwardDirection(ForwardDirection direction){
+	this.forwardDirection = direction;
+    }
+
+    public ForwardDirection getForwardDirection(){
+	return this.forwardDirection;
+    }
     
     public String getJSON(){
 	JsonObject jsonMessageFormat = new JsonObject();
 	jsonMessageFormat.add("ID", this.ID);
 	jsonMessageFormat.add("value", this.value);
 	jsonMessageFormat.add("agentType", this.agentType);
+	jsonMessageFormat.add("forwardDirection", this.forwardDirection.toString());
 	
 	return jsonMessageFormat.asString();
     }

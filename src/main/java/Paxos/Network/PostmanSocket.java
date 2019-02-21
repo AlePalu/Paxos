@@ -36,15 +36,22 @@ class PostmanSocket implements Runnable{
 			// build message
 			Scanner tmpScanner = socket.getInputStream();
 			Pair<InetAddress, Integer> address = (Pair<InetAddress, Integer>)SocketRegistry.getInstance().getRegistry().keySet(socket).toArray()[0];
-			Message newMessage = new Message(tmpScanner.nextLine(), address);
+			//Message newMessage = new Message(tmpScanner.nextLine(), address);
 
+			System.out.printf("new message value: "+tmpScanner.nextLine()+"%n");
+			
 			// inserting message into inbound queue
 			long PID = ProcessRegistry.getInstance().getRegistry().get(address);
-			NetworkManager.getInstance().getInboundTrafficQueue(PID).add(newMessage); // dispatching message to local process
+			//NetworkManager.getInstance().getInboundTrafficQueue(PID).add(newMessage); // dispatching message to local process
 		    }
 		}catch(Exception e){
 
 		}
+	    }
+	    try{
+		Thread.sleep(10); // avoid burning the CPU
+	    }catch(Exception e){
+
 	    }
 	}
     }

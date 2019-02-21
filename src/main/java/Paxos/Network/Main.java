@@ -6,8 +6,9 @@ class Main{
 	System.out.printf("starting Main...\n");
 	try{
 	    ConnectionHandler connectionHandler = new ConnectionHandler(4455);
+	    Thread connectionHandlerThread = new Thread(connectionHandler);
 	    // start thread
-	    connectionHandler.run();
+	    connectionHandlerThread.start();
 	}catch(Exception e){
 	    return;
 	}

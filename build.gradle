@@ -26,7 +26,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     // minimal-json parser
-    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+    compile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 }
 
 task NetworkJar(type: Jar){
@@ -42,6 +42,7 @@ task NetworkJar(type: Jar){
      from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
      with jar
 }
+tasks.jar.dependsOn(NetworkJar)
 
 task NetworkJarTest(type: Jar){
      from(sourceSets.main.output){
@@ -52,4 +53,7 @@ task NetworkJarTest(type: Jar){
 	attributes('Main-Class':'Paxos.NetworkTest.Main')
      }
      baseName = project.name + '-NetworkTest'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
 }
+tasks.jar.dependsOn(NetworkJarTest)

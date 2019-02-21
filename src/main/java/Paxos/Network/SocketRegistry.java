@@ -25,7 +25,7 @@ class SocketRegistry{
 
     public void addElement(Pair<InetAddress, Integer> process, SocketBox socketBox) throws IllegalStateException{
 	// ensure 1:1 mapping
-	if(this.registry.keySet(socketBox).isEmpty()) // this socketBox is not mapped to a key, can add...
+	if(!this.registry.values().contains(socketBox)) // this socketBox is not mapped to a key, can add...
 	    this.registry.put(process, socketBox);
 	else
 	    throw new IllegalStateException();
