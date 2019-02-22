@@ -19,24 +19,21 @@ class Main{
 	    netThread.start();
 
 	    JsonObject jo = new JsonObject();
-	    jo.add("ID", 5);
-	    jo.add("value", 88);
-	    jo.add("agentType", "ciccio");
+	    jo.add("ID", pid);
+	    jo.add("MSGTYPE", MessageType.SUBSCRIBE.toString());
 	    myProcess.sendMessage(jo.toString());
-	}catch(Exception e){
-
-	}
-	//System.out.printf("connected processes: " + networkManager.lookupConnectedProcess().toString() + "%n");
-
-	while(true){
-	    try{
-		Thread.sleep(1000);
-	    }catch(Exception e){
-		e.printStackTrace();
-	    }
-	    //System.out.printf(networkManager.lookupConnectedProcess().toString()+"%n");
 	    
+	    while(true){
+		Thread.sleep(1000);
+		JsonObject jj = new JsonObject();
+		jj.add("ID", pid);
+		jj.add("MSGTYPE", MessageType.DISCOVER.toString());
+		jj.add("FORWARDTYPE", MessageType.BROADCAST.toString());
+	        myProcess.sendMessage(jj.toString());
+	    }
+	}catch(Exception w){
+	    w.printStackTrace();
 	}
-    }
-
+      }
 }
+

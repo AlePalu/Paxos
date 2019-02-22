@@ -1,15 +1,18 @@
 package Paxos.Network;
 
-import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 class SocketRegistry{
 
     private static SocketRegistry instance;
-    private ConcurrentHashMap<Pair<InetAddress, Integer>, SocketBox> registry;
+    private ConcurrentHashMap<Long, SocketBox> registry;
+    private ConcurrentLinkedQueue<SocketBox> pendingSockets;
     
     private SocketRegistry(){
-	this.registry = new ConcurrentHashMap<Pair<InetAddress, Integer>, SocketBox>();
+	this.registry = new ConcurrentHashMap<Long, SocketBox>();
+	this.pendingSockets = new ConcurrentLinkedQueue<SocketBox>();
     }
 
     public static SocketRegistry getInstance(){
@@ -19,14 +22,24 @@ class SocketRegistry{
 	return instance;
     }
 
-    public ConcurrentHashMap<Pair<InetAddress, Integer>, SocketBox> getRegistry(){
+    public ConcurrentHashMap<Long, SocketBox> getRegistry(){
 	return this.registry;
     }
 
-    public void addElement(Pair<InetAddress, Integer> process, SocketBox socketBox) throws IllegalStateException{
+    public ConcurrentLinkedQueue<SocketBox> getPendingSockets(){
+	return this.pendingSockets;
+    }
+
+    public ArrayList<SocketBox> getAllSockets(){
+	ArrayList<SocketBox> tmpArrayList = new ArrayList(this.pendingSockets);
+	tmpArrayList.addAll(this.registry.values());
+	return tmpArrayList;
+    }
+    
+    public void addElement(Long processUUID, SocketBox socketBox) throws IllegalStateException{
 	// ensure 1:1 mapping
 	if(!this.registry.values().contains(socketBox)) // this socketBox is not mapped to a key, can add...
-	    this.registry.put(process, socketBox);
+	    this.registry.put(processUUID, socketBox);
 	else
 	    throw new IllegalStateException();
     }

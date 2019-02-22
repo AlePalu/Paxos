@@ -1,7 +1,6 @@
 package Paxos.Network;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -21,9 +20,9 @@ class ConnectionHandler implements Runnable{
 
 	System.out.printf("Server is up\n");
 	// start thread for queue handling
-	PostmanSocket postmanSocket = new PostmanSocket();
-	Thread postmanThread = new Thread(postmanSocket);
-	postmanThread.start();
+	TrafficHandler trafficHandler = new TrafficHandler();
+	Thread trafficHandlerThread = new Thread(trafficHandler);
+	trafficHandlerThread.start();
 
 	while(true){
 	    try{
@@ -31,15 +30,8 @@ class ConnectionHandler implements Runnable{
 		Socket newSocket = incomingConnectionSocket.accept();
 		// open output/input communication
 		SocketBox socketBox = new SocketBox(newSocket);
-		// add the client to the opened socket registry
-		Pair<InetAddress, Integer> clientIdentifier = new Pair(newSocket.getInetAddress(), newSocket.getPort()); // remote client process identifier
-		System.out.printf("client connected to:" + clientIdentifier.toString()+"\n");		
-		try{
-		    SocketRegistry.getInstance().addElement(clientIdentifier, socketBox); // bind the remote process to the just opened socket
-		}catch(IllegalStateException exception){
-		    System.out.printf("ERROR%n");
-		    return; // this socket has already been binded to a remote process
-		}
+		// add the client to the opened socket registry, but still pending to be binded to a UUID
+		SocketRegistry.getInstance().getPendingSockets().add(socketBox);
 	    }catch(IOException exception){
 
 	    }

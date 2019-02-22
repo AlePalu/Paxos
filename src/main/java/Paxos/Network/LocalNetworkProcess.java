@@ -36,12 +36,14 @@ public class LocalNetworkProcess implements Runnable{
 		    PrintWriter tmpPrintWriter = this.socketBox.getOutputStream();
 		    tmpPrintWriter.println(outboundQueue.remove());
 		    tmpPrintWriter.flush();
-		    System.out.printf("message sent%n");
+		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+"%n");
 		}
 
 		if(this.socketBox.getSocket().getInputStream().available() != 0){ // IN
 		    Scanner tmpScanner = this.socketBox.getInputStream();
-		    this.inboundQueue.add(tmpScanner.nextLine());
+		    String msg = tmpScanner.nextLine();
+		    System.out.printf("message received: "+msg+"%n");
+		    this.inboundQueue.add(msg);
 		}
 
 		Thread.sleep(10); // avoid burning CPU
