@@ -10,7 +10,7 @@ import java.net.Socket;
 
 
 // interface used by processes to communicate with the main NetworkManager server (in a client-server fashion)
-public class LocalNetworkProcess implements Runnable{
+public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
     private SocketBox socketBox;
     private ConcurrentLinkedQueue<String> inboundQueue;
