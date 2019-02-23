@@ -6,6 +6,17 @@ apply plugin: 'application'
 mainClassName = 'Paxos.App'
 
 
+sourceSets{
+	main{
+		java{
+			srcDirs = ['src/main/java']
+		}
+		resources{
+			srcDirs = ['src/main/resources']
+		}
+	}
+}
+
 repositories {
     mavenCentral()
 }
@@ -15,5 +26,34 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     // minimal-json parser
-    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+    compile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 }
+
+task NetworkJar(type: Jar){
+     from(sourceSets.main.output){
+	include 'Paxos/Network/*.class'
+	include 'Paxos/Agent/*.class'
+     }
+     manifest{
+	attributes('Implementation-Title': 'Network Stack Jar',
+		    'Main-Class': 'Paxos.Network.Main') 
+     }
+     baseName = project.name + '-Network'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+tasks.jar.dependsOn(NetworkJar)
+
+task NetworkJarTest(type: Jar){
+     from(sourceSets.main.output){
+	include 'Paxos/**/*.class'
+	
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.NetworkTest.Main')
+     }
+     baseName = project.name + '-NetworkTest'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+tasks.jar.dependsOn(NetworkJarTest)
