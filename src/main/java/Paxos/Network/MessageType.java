@@ -4,7 +4,10 @@ public enum MessageType{
     UNICAST("UNICAST"),
     BROADCAST("BROADCAST"),
     SUBSCRIBE("SUBSCRIBE"),
-    DISCOVER("DISCOVER");
+    DISCOVER("DISCOVER"),
+    DISCOVERRESPONSE("DISCOVERRESPONSE");
+
+
     
     private final String messageType;
 

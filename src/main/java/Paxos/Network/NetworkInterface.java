@@ -1,11 +1,13 @@
 package Paxos.Network;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
-public interface NetworkInterface{
+public interface NetworkInterface extends Runnable{
     public void sendMessage(String msg);
-    public String reeciveMessage();
+    public String receiveMessage();
     public Boolean isThereAnyMessage();
-    public ArrayList<Long> lookupConnectedProcess();
+    public ArrayList<Long> lookupConnectedProcesses();
+    public void updateConnectedProcessesList() throws InterruptedException;
+
+    public void run();
 }
