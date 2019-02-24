@@ -34,7 +34,7 @@ class TrafficHandler implements Runnable{
 				    SocketRegistry.getInstance().addElement(UUID, socket); // bind this socketBox to the UUID
 				    SocketRegistry.getInstance().getPendingSockets().remove(socket);
 
-				    System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
+				 //   System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
 				}
 			    }
 			    else if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.DISCOVER.toString())){
@@ -55,13 +55,13 @@ class TrafficHandler implements Runnable{
 			}
 			else{ // route the message to client
 			    if(JSONmessage.get("FORWARDTYPE").asString().equals(ForwardType.BROADCAST.toString())){ // append automatically my Message.getJSON();
-				System.out.printf("broadcasting message...%n");
+				//System.out.printf("broadcasting message...%n");
 				for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
-				    if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
+				   // if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
 					PrintWriter tmpPrintWriter = socketBroadcast.getOutputStream();
 					tmpPrintWriter.println(message);
 					tmpPrintWriter.flush();
-				    }
+				 //   }
 				}
 			    }else{ // unicast transmission
 				Long UUIDreceiver = JSONmessage.get("RECIPIENTID").asLong();

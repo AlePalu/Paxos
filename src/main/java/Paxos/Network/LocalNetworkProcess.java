@@ -60,7 +60,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	while(true){
 	    try {
 	        // handling messages...
-		
+
 		if(!this.outboundQueue.isEmpty()){ // OUT
 		    // automatically add my UUID
 		    String outboundMessage = outboundQueue.remove();
@@ -70,7 +70,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    PrintWriter tmpPrintWriter = this.socketBox.getOutputStream();
 		    tmpPrintWriter.println(outboundJSONMessage.toString());
 		    tmpPrintWriter.flush();
-		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
+		 //   System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 
 		if(this.socketBox.getSocket().getInputStream().available() != 0){ // IN
@@ -92,7 +92,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 			lock.unlock();
 		    }
 		    else{
-			System.out.printf("message received: "+msg+"%n");
+			//System.out.printf("message received: "+msg+"%n");
 			this.inboundQueue.add(msg);
 		    }
 		}
@@ -108,7 +108,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     }
 
     public void sendMessage(String message){
-	System.out.printf("message added: "+message+"\n");
+	//System.out.printf("message added: "+message+"\n");
 	this.outboundQueue.add(message);
     }
 

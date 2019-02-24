@@ -1,33 +1,41 @@
 package Paxos.Agents;
 
-import Paxos.Network.AgentType;
 import Paxos.Network.Message;
-
-import java.util.Random;
+import Paxos.Network.MessageType;
 
 
 public class Proposer extends Agent {
-    private int numOfProces;
+    private int numOfProcess;
+    private int currentNumOfVoter = 0;
+    private boolean win = false;
 
-
-    private Integer getId(){
-        Random r = new Random();
-        int id = r.nextInt();
-        return id + (int)Thread.currentThread().getId();
+    void updateProcessCount(int n) {
+        this.numOfProcess = n;
     }
 
-    void updateProcessCount(int n){
-        this.numOfProces = n;
-    }
-
-    Message propose(int val){
+    Message propose(String val) {
         Message m;
-        m = new Message(null,val, AgentType.ACCEPTOR);
+        m = new Message(null, val, MessageType.PREPAREREQUEST);
         m.setAsBroadcast();
         return m;
     }
 
+    Message processRespondToPrepareRequest(Message m) {
+        Message respons;
+        currentNumOfVoter++;
+       // System.out.println("voti= "+ currentNumOfVoter + "for " + m.getValue());
+        if (currentNumOfVoter > numOfProcess/2 && !win) {
+            win = true;
+            respons = new Message(null, m.getValue(), MessageType.ACCEPTREQUEST);
+            respons.setAsBroadcast();
+            return  respons;
+        }
+        else
+            return null;
+    }
 
-
-
+    void reset(){
+        currentNumOfVoter = 0;
+        win = false;
+    }
 }

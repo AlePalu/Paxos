@@ -9,14 +9,14 @@ public class Learner {
     FileWriter fw;
 
 
-    Learner(String path){
+    Learner(String path, long pid){
+        path = path + pid+".txt";
         try {
             File file = new File(path);
             if (!file.exists()) {
                 file.createNewFile();
-                System.out.println("qui");
             }
-           fw  = new FileWriter(file,true);
+           fw  = new FileWriter(file,false);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,4 +31,5 @@ public class Learner {
             e.printStackTrace();
         }
     }
+
 }
