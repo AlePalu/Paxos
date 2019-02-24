@@ -3,6 +3,7 @@ package Paxos.Network;
 public enum MessageType{
     UNICAST("UNICAST"),
     BROADCAST("BROADCAST"),
+
     SUBSCRIBE("SUBSCRIBE"),
     DISCOVER("DISCOVER"),
     DISCOVERRESPONSE("DISCOVERRESPONSE");

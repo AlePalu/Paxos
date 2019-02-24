@@ -25,35 +25,36 @@ class TrafficHandler implements Runnable{
 			JsonObject JSONmessage = Json.parse(message).asObject();
 			// route the message on the base of the UUID contained in the message
 			Long UUID = JSONmessage.get("SENDERID").asLong();
-			
-			// is this a SUBSCRIBE message?
-			if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.SUBSCRIBE.toString())){
-			    // SUBSCRIBE messages can be processed only once
-			    if(!SocketRegistry.getInstance().getRegistry().values().contains(socket)){
-				// process the message immediately
-				SocketRegistry.getInstance().addElement(UUID, socket); // bind this socketBox to the UUID
-				SocketRegistry.getInstance().getPendingSockets().remove(socket);
 
-				System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
+			if(JSONmessage.get("MSGTYPE")!=null){ // internal messages...
+			    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.SUBSCRIBE.toString())){
+				// SUBSCRIBE messages can be processed only once
+				if(!SocketRegistry.getInstance().getRegistry().values().contains(socket)){
+				    // process the message immediately
+				    SocketRegistry.getInstance().addElement(UUID, socket); // bind this socketBox to the UUID
+				    SocketRegistry.getInstance().getPendingSockets().remove(socket);
+
+				    System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
+				}
 			    }
-			}
-			else if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.DISCOVER.toString())){
-			    // process DISCOVER message immediately
-			    JsonArray connectedProcesses = new JsonArray();
-			    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
-				connectedProcesses.add(entry.getKey()); // building array with known UUID
-			    }
-			    // reply back with the list of connected processes
-			    JsonObject DISCOVERRESPONSEmessage = new JsonObject();
-			    DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
-			    DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
+			    else if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.DISCOVER.toString())){
+				// process DISCOVER message immediately
+				JsonArray connectedProcesses = new JsonArray();
+				for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
+				    connectedProcesses.add(entry.getKey()); // building array with known UUID
+				}
+				// reply back with the list of connected processes
+				JsonObject DISCOVERRESPONSEmessage = new JsonObject();
+				DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
+				DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
 			    
-			    PrintWriter tmpPrintWriter = socket.getOutputStream();
-			    tmpPrintWriter.println(DISCOVERRESPONSEmessage.toString());
-			    tmpPrintWriter.flush();			    
+				PrintWriter tmpPrintWriter = socket.getOutputStream();
+				tmpPrintWriter.println(DISCOVERRESPONSEmessage.toString());
+				tmpPrintWriter.flush();			    
+			    }
 			}
 			else{// route the message
-			    if(JSONmessage.get("FORWARDTYPE").asString().equals(MessageType.BROADCAST.toString())){
+			    if(JSONmessage.get("FORWARDTYPE").asString().equals(MessageType.BROADCAST.toString())){ // append automatically my Message.getJSON();
 				System.out.printf("broadcasting message...%n");
 				for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
 				    if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
@@ -63,7 +64,7 @@ class TrafficHandler implements Runnable{
 				    }
 				}
 			    }else{ // unicast transmission
-				Long UUIDreceiver = JSONmessage.get("RECEIVERID").asLong();
+				Long UUIDreceiver = JSONmessage.get("RECIPIENTID").asLong();
 				// get the socket binded to this UUID
 				SocketBox receiverSocket = SocketRegistry.getInstance().getRegistry().get(UUIDreceiver);
 				// sending message...
