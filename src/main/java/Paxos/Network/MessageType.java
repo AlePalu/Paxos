@@ -1,9 +1,6 @@
 package Paxos.Network;
 
 public enum MessageType{
-    UNICAST("UNICAST"),
-    BROADCAST("BROADCAST"),
-
     SUBSCRIBE("SUBSCRIBE"),
     DISCOVER("DISCOVER"),
     DISCOVERRESPONSE("DISCOVERRESPONSE"),
@@ -11,7 +8,6 @@ public enum MessageType{
     RESPONDTOPREPAREREQUEST("RESPONDTOPREPAREREQUEST"),
     ACCEPTREQUEST("ACCEPTREQUEST"),
     DECISION("DECISION");
-
 
     
     private final String messageType;

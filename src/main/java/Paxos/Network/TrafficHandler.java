@@ -53,8 +53,8 @@ class TrafficHandler implements Runnable{
 				tmpPrintWriter.flush();			    
 			    }
 			}
-			else{// route the message
-			    if(JSONmessage.get("FORWARDTYPE").asString().equals(MessageType.BROADCAST.toString())){ // append automatically my Message.getJSON();
+			else{ // route the message to client
+			    if(JSONmessage.get("FORWARDTYPE").asString().equals(ForwardType.BROADCAST.toString())){ // append automatically my Message.getJSON();
 				System.out.printf("broadcasting message...%n");
 				for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
 				    if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
