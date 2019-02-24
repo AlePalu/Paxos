@@ -1,10 +1,8 @@
 package Paxos.Agents;
 
-import Paxos.Network.MessageType;
-import Paxos.Network.NetworkManager;
+import Paxos.Network.AgentType;
 import Paxos.Network.Message;
 
-import java.awt.*;
 import java.util.Random;
 
 
@@ -18,10 +16,17 @@ public class Proposer extends Agent {
         return id + (int)Thread.currentThread().getId();
     }
 
-
-    Message makePropose(Integer val){
-        return new Message(getId(),val, MessageType.BROADCAST);
+    void updateProcessCount(int n){
+        this.numOfProces = n;
     }
+
+    Message propose(int val){
+        Message m;
+        m = new Message(null,val, AgentType.ACCEPTOR);
+        m.setAsBroadcast();
+        return m;
+    }
+
 
 
 
