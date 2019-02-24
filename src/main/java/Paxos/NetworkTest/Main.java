@@ -23,6 +23,17 @@ class Main{
 		myProcess.updateConnectedProcessesList();
 		System.out.printf("received response%n");
 		System.out.printf("connected process list: "+myProcess.lookupConnectedProcesses().toString()+"%n");
+
+		Message msg = new Message(null, "ciao" , AgentType.PROPOSER);
+		msg.setAsBroadcast();
+		myProcess.sendMessage(msg.getJSON());
+
+		if(myProcess.isThereAnyMessage()){
+		    Message receivedMessage = new Message(myProcess.receiveMessage());
+		    // example of reply
+		    msg = new Message(receivedMessage.getSenderID(), "risposta", AgentType.LEARNER);
+		    myProcess.sendMessage(msg.getJSON());
+		}
 	    }
 	}catch(Exception w){
 	    w.printStackTrace();

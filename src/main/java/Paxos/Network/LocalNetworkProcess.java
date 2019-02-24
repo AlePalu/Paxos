@@ -70,7 +70,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    PrintWriter tmpPrintWriter = this.socketBox.getOutputStream();
 		    tmpPrintWriter.println(outboundJSONMessage.toString());
 		    tmpPrintWriter.flush();
-		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+"%n");
+		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 
 		if(this.socketBox.getSocket().getInputStream().available() != 0){ // IN
@@ -79,7 +79,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		    // handle DISCOVERRESPONSE message immediately
 		    JsonObject jsonMsg = Json.parse(msg).asObject();
-		    if(jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
+		    if(jsonMsg.get("MSGTYPE")!=null && jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
 			this.connectedProcesses.clear();
 			// get the list of UUID
 			for(JsonValue UUID : jsonMsg.get("CPLIST").asArray()){
@@ -88,13 +88,13 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 			// signal that DISCOVERMESSAGE has been processed
 			lock.lock();
-			System.out.printf("NOTIFICO!!%n");
 			discoverMessageLock.signalAll();
 			lock.unlock();
 		    }
-		    
-		    System.out.printf("message received: "+msg+"%n");
-		    this.inboundQueue.add(msg);
+		    else{
+			System.out.printf("message received: "+msg+"%n");
+			this.inboundQueue.add(msg);
+		    }
 		}
 
 		Thread.sleep(10); // avoid burning CPU
@@ -133,7 +133,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	// blocking call
 	lock.lock();
 	try{
-	    System.out.printf("sto aspettando...%n");
 	    discoverMessageLock.await();
 	}finally{
 	    lock.unlock();
