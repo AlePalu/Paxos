@@ -1,5 +1,7 @@
 package Paxos.Network;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
@@ -7,7 +9,6 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import java.util.Map.Entry;
-
 
 // handle NetworkManager queues, sending and receiving messages to remote clients
 class TrafficHandler implements Runnable{
@@ -17,11 +18,10 @@ class TrafficHandler implements Runnable{
 	while(true){
 	    for(SocketBox socket : SocketRegistry.getInstance().getAllSockets()){
 		try {
-		    if(socket.getSocket().getInputStream().available() != 0){ // there are data ready to be readden
-			// take message
-			Scanner tmpScanner = socket.getInputStream();
-			String message = tmpScanner.nextLine();
-
+		    // take message
+		    String message;
+		    if(socket.getInputStream().ready()){ // there are data ready to be readden
+			message = socket.getInputStream().readLine();
 			JsonObject JSONmessage = Json.parse(message).asObject();
 			// route the message on the base of the UUID contained in the message
 			Long UUID = JSONmessage.get("SENDERID").asLong();
@@ -48,9 +48,10 @@ class TrafficHandler implements Runnable{
 				DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
 				DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
 			    
-				PrintWriter tmpPrintWriter = socket.getOutputStream();
-				tmpPrintWriter.println(DISCOVERRESPONSEmessage.toString());
-				tmpPrintWriter.flush();			    
+				BufferedWriter tmpWriter = socket.getOutputStream();
+				tmpWriter.write(DISCOVERRESPONSEmessage.toString());
+				tmpWriter.newLine();
+				tmpWriter.flush();			    
 			    }
 			}
 			else{// route the message
@@ -58,9 +59,10 @@ class TrafficHandler implements Runnable{
 				System.out.printf("broadcasting message...%n");
 				for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
 				    if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
-					PrintWriter tmpPrintWriter = socketBroadcast.getOutputStream();
-					tmpPrintWriter.println(message);
-					tmpPrintWriter.flush();
+					BufferedWriter tmpWriter = socketBroadcast.getOutputStream();
+					tmpWriter.write(message);
+					tmpWriter.newLine();
+					tmpWriter.flush();
 				    }
 				}
 			    }else{ // unicast transmission
@@ -68,9 +70,10 @@ class TrafficHandler implements Runnable{
 				// get the socket binded to this UUID
 				SocketBox receiverSocket = SocketRegistry.getInstance().getRegistry().get(UUIDreceiver);
 				// sending message...
-				PrintWriter receiverPrintWriter = receiverSocket.getOutputStream();
-				receiverPrintWriter.println(message);
-				receiverPrintWriter.flush();
+				BufferedWriter receiverWriter = receiverSocket.getOutputStream();
+				receiverWriter.write(message);
+				receiverWriter.newLine();
+				receiverWriter.flush();
 			    }
 			}
 		    }

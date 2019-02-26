@@ -9,7 +9,6 @@ import java.net.Socket;
 class ConnectionHandler implements Runnable{
 
     private ServerSocket incomingConnectionSocket;
-
     
     public ConnectionHandler(int welcomePort) throws IOException{
 	this.incomingConnectionSocket = new ServerSocket(welcomePort);

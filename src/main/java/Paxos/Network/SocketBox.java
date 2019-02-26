@@ -1,31 +1,36 @@
 package Paxos.Network;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 class SocketBox{
 
     private Socket socket;
-    private Scanner socketInputStream;
-    private PrintWriter socketOutputStream;
+    //private Scanner socketInputStream;
+    //private PrintWriter socketOutputStream;
 
+    private BufferedReader socketInputStream;
+    private BufferedWriter socketOutputStream;
+    
     public SocketBox(Socket socket) throws IOException{
 	this.socket = socket;
-	this.socketInputStream = new Scanner(this.socket.getInputStream());
-	this.socketOutputStream = new PrintWriter(this.socket.getOutputStream());
+	this.socketInputStream = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+	this.socketOutputStream = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
     }
 
     public Socket getSocket(){
 	return this.socket;
     }
 
-    public Scanner getInputStream(){
+    public BufferedReader getInputStream(){
 	return this.socketInputStream;
     }
 
-    public PrintWriter getOutputStream(){
+    public BufferedWriter getOutputStream(){
 	return this.socketOutputStream;
     }
 

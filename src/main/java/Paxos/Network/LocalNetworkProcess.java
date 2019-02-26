@@ -3,7 +3,6 @@ package Paxos.Network;
 import Paxos.Network.SocketBox;
 import Paxos.Network.MessageType;
 
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
 
@@ -11,13 +10,13 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 
 // interface used by processes to communicate with the main NetworkManager server (in a client-server fashion)
 public class LocalNetworkProcess implements Runnable, NetworkInterface{
@@ -57,6 +56,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     }
 
     public void run(){
+	String message;
+	
 	while(true){
 	    try {
 	        // handling messages...
@@ -67,18 +68,18 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    JsonObject outboundJSONMessage = Json.parse(outboundMessage).asObject();
 		    outboundJSONMessage.add("SENDERID", this.UUID);
 		    // send message on socket
-		    PrintWriter tmpPrintWriter = this.socketBox.getOutputStream();
-		    tmpPrintWriter.println(outboundJSONMessage.toString());
-		    tmpPrintWriter.flush();
+		    BufferedWriter tmpWriter = this.socketBox.getOutputStream();
+		    tmpWriter.write(outboundJSONMessage.toString());
+		    tmpWriter.newLine();
+		    tmpWriter.flush();
 		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
-
-		if(this.socketBox.getSocket().getInputStream().available() != 0){ // IN
-		    Scanner tmpScanner = this.socketBox.getInputStream();
-		    String msg = tmpScanner.nextLine();
-
+		
+		if(this.socketBox.getInputStream().ready()){ // IN
+		    // take the message
+		    message = this.socketBox.getInputStream().readLine();
 		    // handle DISCOVERRESPONSE message immediately
-		    JsonObject jsonMsg = Json.parse(msg).asObject();
+		    JsonObject jsonMsg = Json.parse(message).asObject();
 		    if(jsonMsg.get("MSGTYPE")!=null && jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
 			this.connectedProcesses.clear();
 			// get the list of UUID
@@ -92,8 +93,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 			lock.unlock();
 		    }
 		    else{
-			System.out.printf("message received: "+msg+"%n");
-			this.inboundQueue.add(msg);
+			System.out.printf("message received: "+message+"%n");
+			this.inboundQueue.add(message);
 		    }
 		}
 
