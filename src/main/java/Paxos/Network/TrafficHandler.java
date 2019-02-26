@@ -1,9 +1,6 @@
 package Paxos.Network;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.PrintWriter;
-import java.util.Scanner;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -34,7 +31,7 @@ class TrafficHandler implements Runnable{
 				    SocketRegistry.getInstance().addElement(UUID, socket); // bind this socketBox to the UUID
 				    SocketRegistry.getInstance().getPendingSockets().remove(socket);
 
-				    System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
+				 //   System.out.printf("SUBSRCRIBE message received with UUID: "+UUID+"%n");
 				}
 			    }
 			    else if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.DISCOVER.toString())){
@@ -54,17 +51,14 @@ class TrafficHandler implements Runnable{
 				tmpWriter.flush();			    
 			    }
 			}
-			else{// route the message
-			    if(JSONmessage.get("FORWARDTYPE").asString().equals(MessageType.BROADCAST.toString())){ // append automatically my Message.getJSON();
-				System.out.printf("broadcasting message...%n");
-				for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
-				    if(!socketBroadcast.equals(socket)){ // not send back to the sending socket
-					BufferedWriter tmpWriter = socketBroadcast.getOutputStream();
-					tmpWriter.write(message);
-					tmpWriter.newLine();
-					tmpWriter.flush();
-				    }
-				}
+			else{ // route the message to client
+			    if(JSONmessage.get("FORWARDTYPE").asString().equals(ForwardType.BROADCAST.toString())){ // append automatically my Message.getJSON();
+			        for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
+			            BufferedWriter tmpWriter = socketBroadcast.getOutputStream();
+				    tmpWriter.write(message);
+				    tmpWriter.newLine();
+				    tmpWriter.flush();
+			        }
 			    }else{ // unicast transmission
 				Long UUIDreceiver = JSONmessage.get("RECIPIENTID").asLong();
 				// get the socket binded to this UUID

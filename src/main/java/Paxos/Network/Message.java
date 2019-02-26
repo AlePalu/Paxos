@@ -3,21 +3,36 @@ package Paxos.Network;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
+enum ForwardType{
+    UNICAST("UNICAST"),
+    BROADCAST("BROADCAST");
+
+    private String type;
+    
+    private ForwardType(String type){
+	this.type = type;
+    }
+
+    public String toString(){
+	return this.type;
+    }
+}
+
 public class Message{
     // paxos related informations
     private Long senderID;
     private Long recipientID;
     private String value;
-    private String agentType; // type of agent to which this message is directed
+    private String messageType; // type of agent to which this message is directed
     
     // needed for internal operation
     private Boolean isBroadcast;
 
     // used when you want to send a message
-    public Message(Long recipientID, String value, AgentType agentType){
+    public Message(Long recipientID, String value, MessageType messageType){
 	this.recipientID = recipientID;
 	this.value = value;
-	this.agentType = agentType.toString();
+	this.messageType = messageType.toString();
 
 	this.isBroadcast = false;
     }
@@ -28,7 +43,7 @@ public class Message{
 	if(this.recipientID!=null)
 	    this.recipientID = jsonMessage.get("RECIPIENTID").asLong();
 	this.value = jsonMessage.get("VALUE").asString();
-	this.agentType = jsonMessage.get("AGENTTYPE").asString();
+	this.messageType = jsonMessage.get("MESSAGETYPE").asString();
 
 	// this is automatically inserted by the routing logic
 	this.senderID = jsonMessage.get("SENDERID").asLong();
@@ -50,8 +65,8 @@ public class Message{
 	return this.value;
     }
 
-    public String getAgentType(){
-	return this.agentType;
+    public String getMessageType(){
+	return this.messageType;
     }
     
     public String getJSON(){
@@ -59,12 +74,12 @@ public class Message{
 	if(this.recipientID!=null) // broadcast messages don't require a recipientID
 	    jsonMessageFormat.add("RECIPIENTID", this.recipientID);
 	jsonMessageFormat.add("VALUE", this.value);
-	jsonMessageFormat.add("AGENTTYPE", this.agentType);
+	jsonMessageFormat.add("MESSAGETYPE", this.messageType);
 	
 	if(this.isBroadcast)
-	    jsonMessageFormat.add("FORWARDTYPE", MessageType.BROADCAST.toString());
+	    jsonMessageFormat.add("FORWARDTYPE", ForwardType.BROADCAST.toString());
 	else
-	    jsonMessageFormat.add("FORWARDTYPE", MessageType.UNICAST.toString());
+	    jsonMessageFormat.add("FORWARDTYPE", ForwardType.UNICAST.toString());
 	
 	return jsonMessageFormat.toString();
     }

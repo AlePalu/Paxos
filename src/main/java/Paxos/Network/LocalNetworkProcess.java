@@ -31,28 +31,28 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     private final Condition discoverMessageLock;
     
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
-	Socket processSocket = new Socket(ip, port); // connect to NetworkManager server
-	this.socketBox = new SocketBox(processSocket);
+		Socket processSocket = new Socket(ip, port); // connect to NetworkManager server
+		this.socketBox = new SocketBox(processSocket);
 
-	// initialize internal state
-	this.UUID = UUID;
-	this.inboundQueue = new ConcurrentLinkedQueue<String>();
-	this.outboundQueue = new ConcurrentLinkedQueue<String>();
-	this.connectedProcesses = new ArrayList<Long>();
+		// initialize internal state
+		this.UUID = UUID;
+		this.inboundQueue = new ConcurrentLinkedQueue<String>();
+		this.outboundQueue = new ConcurrentLinkedQueue<String>();
+		this.connectedProcesses = new ArrayList<Long>();
 
-	this.lock = new ReentrantLock();
-	this.discoverMessageLock = lock.newCondition();
-	
-	// subscribe the process to the list of connected processes
-	JsonObject SUBSCRIBEmessage = new JsonObject();
-	SUBSCRIBEmessage.add("SENDERID", UUID); // needed to bind my socketBox to my UUID
-	SUBSCRIBEmessage.add("MSGTYPE", MessageType.SUBSCRIBE.toString());
-	this.sendMessage(SUBSCRIBEmessage.toString());
-	
-	// just send a DISCOVER to get a first list of connected processes...
-	JsonObject DISCOVERmessage = new JsonObject();
-	DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
-	this.sendMessage(DISCOVERmessage.toString());
+		this.lock = new ReentrantLock();
+		this.discoverMessageLock = lock.newCondition();
+
+		// subscribe the process to the list of connected processes
+		JsonObject SUBSCRIBEmessage = new JsonObject();
+		SUBSCRIBEmessage.add("SENDERID", UUID); // needed to bind my socketBox to my UUID
+		SUBSCRIBEmessage.add("MSGTYPE", MessageType.SUBSCRIBE.toString());
+		this.sendMessage(SUBSCRIBEmessage.toString());
+
+		// just send a DISCOVER to get a first list of connected processes...
+		JsonObject DISCOVERmessage = new JsonObject();
+		DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
+		this.sendMessage(DISCOVERmessage.toString());
     }
 
     public void run(){
@@ -61,7 +61,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	while(true){
 	    try {
 	        // handling messages...
-		
+
 		if(!this.outboundQueue.isEmpty()){ // OUT
 		    // automatically add my UUID
 		    String outboundMessage = outboundQueue.remove();
@@ -109,7 +109,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     }
 
     public void sendMessage(String message){
-	System.out.printf("message added: "+message+"\n");
+	//System.out.printf("message added: "+message+"\n");
 	this.outboundQueue.add(message);
     }
 

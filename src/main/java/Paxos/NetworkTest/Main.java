@@ -13,7 +13,7 @@ class Main{
 	final long pid = runtime.getPid();
 
 	try{
-	    NetworkInterface myProcess = new LocalNetworkProcess("127.0.0.1", 4455, pid);
+	    NetworkInterface myProcess = new LocalNetworkProcess("127.0.0.1", 40000, pid);
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
     
@@ -24,14 +24,14 @@ class Main{
 		System.out.printf("received response%n");
 		System.out.printf("connected process list: "+myProcess.lookupConnectedProcesses().toString()+"%n");
 
-		Message msg = new Message(null, "ciao" , AgentType.PROPOSER);
+		Message msg = new Message(null, "ciao" , MessageType.PAXOS);
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
 
 		if(myProcess.isThereAnyMessage()){
 		    Message receivedMessage = new Message(myProcess.receiveMessage());
 		    // example of reply
-		    msg = new Message(receivedMessage.getSenderID(), "risposta", AgentType.LEARNER);
+		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.PAXOS);
 		    myProcess.sendMessage(msg.getJSON());
 		}
 	    }
