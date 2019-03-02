@@ -7,11 +7,9 @@ import java.net.Socket;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
-class SocketBox{
+public class SocketBox{
 
     private Socket socket;
-    //private Scanner socketInputStream;
-    //private PrintWriter socketOutputStream;
 
     private BufferedReader socketInputStream;
     private BufferedWriter socketOutputStream;

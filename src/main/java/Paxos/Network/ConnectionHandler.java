@@ -17,7 +17,7 @@ class ConnectionHandler implements Runnable{
     // thread routine
     public void run(){
 
-	System.out.printf("Server is up\n");
+	System.out.printf("[ConnectionHandler]: Ready to accept connections on port: "+this.incomingConnectionSocket.getLocalPort()+"\n");
 	// start thread for queue handling
 	TrafficHandler trafficHandler = new TrafficHandler();
 	Thread trafficHandlerThread = new Thread(trafficHandler);
@@ -27,12 +27,12 @@ class ConnectionHandler implements Runnable{
 	    try{
 		// waiting for new connection
 		Socket newSocket = incomingConnectionSocket.accept();
-		// open output/input communication
+	        // open output/input communication
 		SocketBox socketBox = new SocketBox(newSocket);
 		// add the client to the opened socket registry, but still pending to be binded to a UUID
 		SocketRegistry.getInstance().getPendingSockets().add(socketBox);
 	    }catch(IOException exception){
-
+		
 	    }
         }
     }

@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 class TrafficHandler implements Runnable{
 
     public void run(){
-	System.out.printf("queue handler is ready\n");
+	System.out.printf("[TrafficHandler]: Ready to route traffic!\n");
 	while(true){
 	    for(SocketBox socket : SocketRegistry.getInstance().getAllSockets()){
 		try {

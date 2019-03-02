@@ -9,6 +9,8 @@ class SocketRegistry{
     private static SocketRegistry instance;
     private ConcurrentHashMap<Long, SocketBox> registry;
     private ConcurrentLinkedQueue<SocketBox> pendingSockets;
+
+    private SocketBox namingSocket;
     
     private SocketRegistry(){
 	this.registry = new ConcurrentHashMap<Long, SocketBox>();
@@ -34,6 +36,14 @@ class SocketRegistry{
 	ArrayList<SocketBox> tmpArrayList = new ArrayList(this.pendingSockets);
 	tmpArrayList.addAll(this.registry.values());
 	return tmpArrayList;
+    }
+
+    public void setNamingSocket(SocketBox namingSocket){
+	this.namingSocket = namingSocket;
+    }
+
+    public SocketBox getNamingSocket(){
+	return this.namingSocket;
     }
     
     public void addElement(Long processUUID, SocketBox socketBox) throws IllegalStateException{

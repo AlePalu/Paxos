@@ -12,7 +12,6 @@ import com.eclipsesource.json.JsonValue;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -67,6 +66,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    String outboundMessage = outboundQueue.remove();
 		    JsonObject outboundJSONMessage = Json.parse(outboundMessage).asObject();
 		    outboundJSONMessage.add("SENDERID", this.UUID);
+
 		    // send message on socket
 		    BufferedWriter tmpWriter = this.socketBox.getOutputStream();
 		    tmpWriter.write(outboundJSONMessage.toString());
@@ -109,7 +109,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     }
 
     public void sendMessage(String message){
-	//System.out.printf("message added: "+message+"\n");
 	this.outboundQueue.add(message);
     }
 
