@@ -43,7 +43,7 @@ public class Message{
 	if(this.recipientID!=null)
 	    this.recipientID = jsonMessage.get("RECIPIENTID").asLong();
 	this.value = jsonMessage.get("VALUE").asString();
-	this.messageType = jsonMessage.get("MESSAGETYPE").asString();
+	this.messageType = jsonMessage.get("MSGTYPE").asString();
 
 	// this is automatically inserted by the routing logic
 	this.senderID = jsonMessage.get("SENDERID").asLong();
@@ -74,7 +74,7 @@ public class Message{
 	if(this.recipientID!=null) // broadcast messages don't require a recipientID
 	    jsonMessageFormat.add("RECIPIENTID", this.recipientID);
 	jsonMessageFormat.add("VALUE", this.value);
-	jsonMessageFormat.add("MESSAGETYPE", this.messageType);
+	jsonMessageFormat.add("MSGTYPE", this.messageType);
 	
 	if(this.isBroadcast)
 	    jsonMessageFormat.add("FORWARDTYPE", ForwardType.BROADCAST.toString());

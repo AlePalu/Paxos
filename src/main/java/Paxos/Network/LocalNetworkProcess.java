@@ -68,10 +68,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    outboundJSONMessage.add("SENDERID", this.UUID);
 
 		    // send message on socket
-		    BufferedWriter tmpWriter = this.socketBox.getOutputStream();
-		    tmpWriter.write(outboundJSONMessage.toString());
-		    tmpWriter.newLine();
-		    tmpWriter.flush();
+		    this.socketBox.sendOut(outboundJSONMessage.toString());
 		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 		

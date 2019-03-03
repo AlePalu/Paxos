@@ -32,6 +32,16 @@ public class SocketBox{
 	return this.socketOutputStream;
     }
 
+    public void sendOut(String message){
+	try{
+	    this.socketOutputStream.write(message);
+	    this.socketOutputStream.newLine();
+	    this.socketOutputStream.flush();
+	}catch(Exception e){
+	    
+	}
+    }
+    
     public void close() throws IOException{
 	this.socket.close();
 	this.socketInputStream.close();
