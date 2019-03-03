@@ -6,8 +6,8 @@ class TrafficHandler implements Runnable{
     public void run(){
 	System.out.printf("[TrafficHandler]: Ready to route traffic!\n");
 	while(true){
-	    for(SocketBox socket : SocketRegistry.getInstance().getAllSockets()){
-		try {
+	    try{
+		for(SocketBox socket : SocketRegistry.getInstance().getAllSockets()){
 		    // take message
 		    String message;
 		    if(socket.getInputStream().ready()){ // there are data ready to be readden
@@ -21,17 +21,10 @@ class TrafficHandler implements Runnable{
 			    }
 			}
 		    }
-		}catch (Exception e) {
-		    System.out.println("Error " + e.getMessage());
-		    e.printStackTrace();
 		}
-
-	    }
-	    
-	    try{
 		Thread.sleep(10); // avoid burning the CPU
 	    }catch(Exception e){
-
+		System.out.printf("FAI QUALCOSA!!%n");
 	    }
 	}
     }
