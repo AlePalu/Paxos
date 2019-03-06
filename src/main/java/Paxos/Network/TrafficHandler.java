@@ -11,6 +11,7 @@ class TrafficHandler implements Runnable{
 		    // take message
 		    String message;
 		    if(socket.getInputStream().ready()){ // there are data ready to be readden
+			// get the message from socket
 			message = socket.getInputStream().readLine();
 
 			// apply traffic rule
@@ -24,9 +25,8 @@ class TrafficHandler implements Runnable{
 		}
 		Thread.sleep(10); // avoid burning the CPU
 	    }catch(Exception e){
-		System.out.printf("FAI QUALCOSA!!%n");
+	        continue;
 	    }
 	}
     }
-   
 }

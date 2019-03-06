@@ -35,6 +35,7 @@ class SocketRegistry{
     public ArrayList<SocketBox> getAllSockets(){
 	ArrayList<SocketBox> tmpArrayList = new ArrayList(this.pendingSockets);
 	tmpArrayList.addAll(this.registry.values());
+	tmpArrayList.add(this.namingSocket);
 	return tmpArrayList;
     }
 

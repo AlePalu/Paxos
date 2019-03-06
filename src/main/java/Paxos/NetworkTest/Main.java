@@ -19,15 +19,15 @@ class Main{
     
 	    while(true){
 		Thread.sleep(1000);
-		System.out.printf("sending DISCOVER...%n");
 		myProcess.updateConnectedProcessesList();
-		System.out.printf("received response%n");
-		System.out.printf("connected process list: "+myProcess.lookupConnectedProcesses().toString()+"%n");
-
+		
 		Message msg = new Message(null, "ciao" , MessageType.PAXOS);
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
 
+		msg = new Message(null, "prova", MessageType.NAMINGREQUEST);
+		myProcess.sendMessage(msg.getJSON());
+		
 		if(myProcess.isThereAnyMessage()){
 		    Message receivedMessage = new Message(myProcess.receiveMessage());
 		    // example of reply

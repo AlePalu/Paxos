@@ -69,13 +69,16 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
-		    System.out.printf("message sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
+		    System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 		
 		if(this.socketBox.getInputStream().ready()){ // IN
 		    // take the message
 		    message = this.socketBox.getInputStream().readLine();
-		    // handle DISCOVERRESPONSE message immediately
+
+		    System.out.printf("[IN ]: "+message+"\n");
+
+		    // handle DISCOVERRESPONSE immediately
 		    JsonObject jsonMsg = Json.parse(message).asObject();
 		    if(jsonMsg.get("MSGTYPE")!=null && jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
 			this.connectedProcesses.clear();
@@ -90,7 +93,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 			lock.unlock();
 		    }
 		    else{
-			System.out.printf("message received: "+message+"%n");
 			this.inboundQueue.add(message);
 		    }
 		}

@@ -18,9 +18,7 @@ public enum MessageType implements TrafficRule{
 		SocketRegistry.getInstance().getPendingSockets().remove(s);
 	    }
 	}),
-    DISCOVERRESPONSE("DISCOVERRESPONSE",(s, m)->{
-	    return;
-	}),
+    DISCOVERRESPONSE("DISCOVERRESPONSE"),
     DISCOVER("DISCOVER",(s, m)->{
 	    JsonArray connectedProcesses = new JsonArray();
 	    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
@@ -33,8 +31,10 @@ public enum MessageType implements TrafficRule{
 	    
 	    s.sendOut(DISCOVERRESPONSEmessage.toString());
 	}),
-    NAMINGREQUEST("NAMINGREQUEST", (s,m)->{return;}),
-    NAMINGSUBSCRIBE("NAMINGSUBSCRIBE", (s,m)->{return;}),
+
+    // naming messages are simply forwarded to the naming service process
+    NAMINGREQUEST("NAMINGREQUEST", (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m)),
+    NAMINGSUBSCRIBE("NAMINGSUBSCRIBE", (s,m) -> SocketRegistry.getInstance().setNamingSocket(s)),
     
     // paxos protocol related messages
     PAXOS("PAXOS", (s,m) -> MessageType.forwardTo(s,m)),
@@ -51,10 +51,13 @@ public enum MessageType implements TrafficRule{
 	this.rule = rule;
     }
 
-    private static void forwardTo(SocketBox socket, String message){		
+    private MessageType(String type){
+	this.messageType = type;
+	this.rule = null;
+    }
+    
+    private static void forwardTo(SocketBox socket, String message){	
 	JsonObject Jmessage = Json.parse(message).asObject();
-	// route the message on the base of the UUID contained in the message
-	Long UUID = Jmessage.get("SENDERID").asLong();
 	if(Jmessage.get("FORWARDTYPE").asString().equals(ForwardType.BROADCAST.toString())){ // append automatically my Message.getJSON();
 	    for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
 		socketBroadcast.sendOut(message);

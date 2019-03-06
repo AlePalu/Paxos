@@ -25,14 +25,13 @@ class Main{
 
 	    if(Inet4Address.getLocalHost().getHostAddress().equals(namingNodeIP)){
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
+		
 		NamingRequestHandler namingHandler = new NamingRequestHandler("127.0.0.1", 40000);
 		Thread namingThread = new Thread(namingHandler);
 		namingThread.start();
 	    }else{
-		System.out.printf("[Main]: Naming service is remote. Using the supplied IP as Naming service reference...\n");
-		
+		System.out.printf("[Main]: Naming service is remote. Using the supplied IP as Naming service reference...\n");		
 	    }
-	    
 	}catch(Exception e){
 	    return;
 	}

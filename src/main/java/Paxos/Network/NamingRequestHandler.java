@@ -17,18 +17,21 @@ public class NamingRequestHandler implements Runnable{
     BufferedReader fileReader;
     BufferedWriter fileWriter;
     SocketBox socketBox;
-
+    
     public NamingRequestHandler(String ip, int port){
 	this.processesOnNetworkFile = new File("processList.txt");
+	
 	try{
 	    // create file if not exists
 	    this.processesOnNetworkFile.createNewFile();
-	    
+
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure
 	    this.socketBox = new SocketBox(connSocket);
 
-	    // keep track of naming service socket
-	    SocketRegistry.getInstance().setNamingSocket(this.socketBox);
+	    // sending NAMINGSUBSCRIBE
+	    JsonObject NAMINGSUBSCRIBEmessage = new JsonObject();
+	    NAMINGSUBSCRIBEmessage.add("MSGTYPE", MessageType.NAMINGSUBSCRIBE.toString());
+	    this.socketBox.sendOut(NAMINGSUBSCRIBEmessage.toString());
 	    
 	    // open file output and input stream 
 	    this.fileReader = new BufferedReader(new FileReader(this.processesOnNetworkFile));
@@ -46,35 +49,39 @@ public class NamingRequestHandler implements Runnable{
 	String message;
 	// handling messages...
 	try{
-	    if(this.socketBox.getInputStream().ready()){
-		message = this.socketBox.getInputStream().readLine();
+	    while(true){
+		if(this.socketBox.getInputStream().ready()){
+		    message = this.socketBox.getInputStream().readLine();
 
-		JsonObject JSONmessage = Json.parse(message).asObject();
+		    System.out.printf("ARRIVATO:"+message+"%n");
+		    
+		    JsonObject JSONmessage = Json.parse(message).asObject();
 
-		if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGREQUEST.toString())){
-		    // respond to naming request
-		    JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
+		    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGREQUEST.toString())){
+			// respond to naming request
+			//JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
 
-		    // send message back
-		    BufferedWriter tmpWriter = this.socketBox.getOutputStream();
-		    tmpWriter.write(processesOnNetwork.toString());
-		    tmpWriter.newLine();
-		    tmpWriter.flush();			
+			// send message back
+			//this.socketBox.sendOut(processesOnNetwork.toString());
+			System.out.printf("PROCESSATO%n");
+		    }
+		    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGSUBSCRIBE.toString())){
+			JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
+			// adding new client
+			processesOnNetwork.add(JSONmessage.get("NAME").asString());
+
+			// write on file
+			this.fileWriter.write(processesOnNetwork.toString());
+			System.out.printf("name added%n");
+		    }
 		}
-		if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGSUBSCRIBE.toString())){
-		    JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
-		    // adding new client
-		    processesOnNetwork.add(JSONmessage.get("NAME").asString());
-
-		    // write on file
-		    this.fileWriter.write(processesOnNetwork.toString());
-	        }
+		Thread.sleep(10);
 	    }
-	
-	    // close connection
-	    this.socketBox.close();
-	}catch(Exception e){
+       	}catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
     }
+
+    
 }
