@@ -5,7 +5,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.RandomAccessFile;
+import java.net.Inet4Address;
 import java.net.Socket;
+import java.io.PrintWriter;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -14,9 +17,14 @@ import com.eclipsesource.json.JsonObject;
 public class NamingRequestHandler implements Runnable{
 
     File processesOnNetworkFile;
-    BufferedReader fileReader;
-    BufferedWriter fileWriter;
+    BufferedReader buffFileReader;
+    BufferedWriter buffFileWriter;
+    FileReader fileReader;
     SocketBox socketBox;
+    JsonArray tmpJsonArray;
+
+
+    RandomAccessFile file;
     
     public NamingRequestHandler(String ip, int port){
 	this.processesOnNetworkFile = new File("processList.txt");
@@ -24,18 +32,21 @@ public class NamingRequestHandler implements Runnable{
 	try{
 	    // create file if not exists
 	    this.processesOnNetworkFile.createNewFile();
-
+	    
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure
 	    this.socketBox = new SocketBox(connSocket);
 
-	    // sending NAMINGSUBSCRIBE
+	    // subscribe the naming service to the local network infrastucture
 	    JsonObject NAMINGSUBSCRIBEmessage = new JsonObject();
 	    NAMINGSUBSCRIBEmessage.add("MSGTYPE", MessageType.NAMINGSUBSCRIBE.toString());
 	    this.socketBox.sendOut(NAMINGSUBSCRIBEmessage.toString());
-	    
-	    // open file output and input stream 
-	    this.fileReader = new BufferedReader(new FileReader(this.processesOnNetworkFile));
-	    this.fileWriter = new BufferedWriter(new FileWriter(this.processesOnNetworkFile));
+
+	    // insert the IP of the machine where naming service is running in the available nodes
+	    FileWriter fileWriter = new FileWriter(this.processesOnNetworkFile,false);
+	    String myIP = Inet4Address.getLocalHost().getHostAddress();
+	    fileWriter.write(myIP+"\n");
+	    fileWriter.flush();
+	    fileWriter.close();
 	}
 	catch (Exception e) {
 	    System.out.println("Error " + e.getMessage());
@@ -48,31 +59,25 @@ public class NamingRequestHandler implements Runnable{
     public void run(){
 	String message;
 	// handling messages...
-	try{
+
+	try{	    
 	    while(true){
 		if(this.socketBox.getInputStream().ready()){
 		    message = this.socketBox.getInputStream().readLine();
-
-		    System.out.printf("ARRIVATO:"+message+"%n");
-		    
 		    JsonObject JSONmessage = Json.parse(message).asObject();
-
+	    
 		    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGREQUEST.toString())){
-			// respond to naming request
-			//JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
-
-			// send message back
-			//this.socketBox.sendOut(processesOnNetwork.toString());
-			System.out.printf("PROCESSATO%n");
+			FileWriter fw = new FileWriter(this.processesOnNetworkFile, true);
+		   	fw.close();
 		    }
-		    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGSUBSCRIBE.toString())){
-			JsonArray processesOnNetwork = Json.parse(fileReader).asArray();
+		    if(JSONmessage.get("MSGTYPE").asString().equals(MessageType.NAMINGUPDATE.toString())){
+			FileWriter fw = new FileWriter(this.processesOnNetworkFile, true);
 			// adding new client
-			processesOnNetwork.add(JSONmessage.get("NAME").asString());
-
+			String newName = JSONmessage.get("NAME").asString();
 			// write on file
-			this.fileWriter.write(processesOnNetwork.toString());
-			System.out.printf("name added%n");
+			fw.write(newName+"\n");
+			fw.flush();
+		        fw.close();
 		    }
 		}
 		Thread.sleep(10);
@@ -81,7 +86,5 @@ public class NamingRequestHandler implements Runnable{
 	    e.printStackTrace();
 	    return;
 	}
-    }
-
-    
+    }    
 }

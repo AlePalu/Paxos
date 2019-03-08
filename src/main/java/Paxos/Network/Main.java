@@ -22,9 +22,12 @@ class Main{
 	    Thread connectionHandlerThread = new Thread(connectionHandler);
 	    // start thread
 	    connectionHandlerThread.start();
-
+	    
 	    if(Inet4Address.getLocalHost().getHostAddress().equals(namingNodeIP)){
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
+
+		// give time to network infrastructure to go up
+		Thread.sleep(2000);
 		
 		NamingRequestHandler namingHandler = new NamingRequestHandler("127.0.0.1", 40000);
 		Thread namingThread = new Thread(namingHandler);

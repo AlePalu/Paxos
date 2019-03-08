@@ -35,6 +35,8 @@ public enum MessageType implements TrafficRule{
     // naming messages are simply forwarded to the naming service process
     NAMINGREQUEST("NAMINGREQUEST", (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m)),
     NAMINGSUBSCRIBE("NAMINGSUBSCRIBE", (s,m) -> SocketRegistry.getInstance().setNamingSocket(s)),
+    NAMINGREPLY("NAMINGREPLY", (s,m) -> {}),
+    NAMINGUPDATE("NAMINGUPDATE", (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m)),
     
     // paxos protocol related messages
     PAXOS("PAXOS", (s,m) -> MessageType.forwardTo(s,m)),

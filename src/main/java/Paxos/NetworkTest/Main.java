@@ -3,6 +3,8 @@ package Paxos.NetworkTest;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
+import com.eclipsesource.json.JsonObject;
+
 import Paxos.Network.*;
 
 class Main{
@@ -18,7 +20,7 @@ class Main{
 	    netThread.start();
     
 	    while(true){
-		Thread.sleep(1000);
+		Thread.sleep(100);
 		myProcess.updateConnectedProcessesList();
 		
 		Message msg = new Message(null, "ciao" , MessageType.PAXOS);
@@ -27,6 +29,11 @@ class Main{
 
 		msg = new Message(null, "prova", MessageType.NAMINGREQUEST);
 		myProcess.sendMessage(msg.getJSON());
+
+		JsonObject nn = new JsonObject();
+		nn.add("MSGTYPE", MessageType.NAMINGUPDATE.toString());
+		nn.add("NAME", "111111");
+		myProcess.sendMessage(nn.toString());
 		
 		if(myProcess.isThereAnyMessage()){
 		    Message receivedMessage = new Message(myProcess.receiveMessage());
