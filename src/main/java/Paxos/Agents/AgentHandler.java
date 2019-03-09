@@ -3,52 +3,47 @@ package Paxos.Agents;
 import Paxos.Network.LocalNetworkProcess;
 import Paxos.Network.Message;
 import Paxos.Network.NetworkInterface;
-import com.eclipsesource.json.JsonObject;
 
-import java.io.IOException;
-import java.util.Random;
 
-public class AgentHandler extends Agent implements Runnable {
+public class AgentHandler implements Runnable {
     public NetworkInterface network;
     private Aceptor a;
     private Learner l;
     private Proposer p;
-    private Long id;
+    private PaxosData data;
 
 
-    public AgentHandler(){
+   /* public AgentHandler(){
         Random r = new Random();
-        id = Math.abs(r.nextLong());
+        long id = Math.abs(r.nextLong());
         try {
             network = new LocalNetworkProcess("127.0.0.1",40000,id);
             Thread netThread = new Thread(network);
-            a = new Aceptor();
-            a.id = id;
+            a = new Aceptor(id);
             l = new Learner("/home/prosdothewolf/Desktop/",id);
             p = new Proposer();
             netThread.start();
             p.updateProcessCount(network.lookupConnectedProcesses().size());
         }catch(IOException e){e.printStackTrace();}
-    }
+    }*/
 
-    public AgentHandler(Long n){
-        id = n;
+    public AgentHandler(Long n, String path){
         try {
             network = new LocalNetworkProcess("127.0.0.1",40000,n);
             Thread netThread = new Thread(network);
-            a = new Aceptor();
-            a.id = id;
-            l = new Learner("/home/prosdothewolf/Desktop/",n);
-            p = new Proposer();
             netThread.start();
-            p.updateProcessCount(network.lookupConnectedProcesses().size());
-        }catch(IOException e){e.printStackTrace();}
+            //wait set up network
+            Thread.sleep(100);
+            this.data = new PaxosData(network.lookupConnectedProcesses().size(),n);
+            a = new Aceptor(this.data);
+            l = new Learner(this.data,path);
+            p = new Proposer(this.data);
+        }catch(Exception e){e.printStackTrace();}
     }
 
     @Override
     public void run(){
         Message m;
-        JsonObject jsonMsg;
         String s;
         while(true) {
            try{
@@ -69,7 +64,7 @@ public class AgentHandler extends Agent implements Runnable {
         Message propose;
         try {
             network.updateConnectedProcessesList();
-            p.updateProcessCount(network.lookupConnectedProcesses().size());
+            this.data.setNumOfProces(network.lookupConnectedProcesses().size());
         }catch(InterruptedException e){e.printStackTrace();}
         propose = p.propose(val);
         network.sendMessage(propose.getJSON());
@@ -82,24 +77,21 @@ public class AgentHandler extends Agent implements Runnable {
                 response = a.processPrepareRequest(m);
                 break;
             case"RESPONDTOPREPAREREQUEST":
-                response = p.processRespondToPrepareRequest(m);
+                response = p.processRespondToPrepareRequest();
                 break;
             case "ACCEPTREQUEST":
-                l.learn(m.getValue());
-              // reset();
+                response = a.processAcceptRequest(m);
+            case "DECISION":
+                l.processDecisionRequest(m);
                 break;
         }
-        if (response != null)
+        if (response != null) {
             network.sendMessage(response.getJSON());
-    }
-
-    private void reset(){
-        p.reset();
-        a.reset();
+        }
     }
 
     public long getid(){
-        return id;
+        return data.getId();
     }
 
 }

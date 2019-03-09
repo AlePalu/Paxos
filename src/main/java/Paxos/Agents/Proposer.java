@@ -4,38 +4,38 @@ import Paxos.Network.Message;
 import Paxos.Network.MessageType;
 
 
-public class Proposer extends Agent {
-    private int numOfProcess;
-    private int currentNumOfVoter = 0;
-    private boolean win = false;
+public class Proposer {
 
-    void updateProcessCount(int n) {
-        this.numOfProcess = n;
+    private int currentNumOfVoter;
+    private boolean win;
+    private PaxosData data;
+    private String proposedValue;
+
+    Proposer(PaxosData data){
+        this.data = data;
+        this.currentNumOfVoter =0;
+        this.win = false;
+        this.proposedValue = null;
     }
 
     Message propose(String val) {
         Message m;
-        m = new Message(null, val, MessageType.PREPAREREQUEST);
+        this.proposedValue = val;
+        m = new Message(null, null, MessageType.PREPAREREQUEST);
         m.setAsBroadcast();
         return m;
     }
 
-    Message processRespondToPrepareRequest(Message m) {
-        Message respons;
+    Message processRespondToPrepareRequest() {
+        Message respond;
         currentNumOfVoter++;
-       // System.out.println("voti= "+ currentNumOfVoter + "for " + m.getValue());
-        if (currentNumOfVoter > numOfProcess/2 && !win) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && !win) {
             win = true;
-            respons = new Message(null, m.getValue(), MessageType.ACCEPTREQUEST);
-            respons.setAsBroadcast();
-            return  respons;
+            respond = new Message(null, this.proposedValue, MessageType.ACCEPTREQUEST);
+            respond.setAsBroadcast();
+            return respond;
         }
         else
             return null;
-    }
-
-    void reset(){
-        currentNumOfVoter = 0;
-        win = false;
     }
 }

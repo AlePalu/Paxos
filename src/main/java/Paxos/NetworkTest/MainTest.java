@@ -7,7 +7,7 @@ import com.eclipsesource.json.JsonObject;
 
 import Paxos.Network.*;
 
-class Main{
+class MainTest {
     
     public static void main(String[] args) {
 	// get pid of this process

@@ -3,14 +3,18 @@ package Paxos.Agents;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import Paxos.Network.Message;
 
 public class Learner {
 
-    FileWriter fw;
+    private FileWriter fw;
+    private PaxosData data;
+    private int currentNumOfVoter;
 
-
-    Learner(String path, long pid){
-        path = path + pid+".txt";
+    Learner(PaxosData data, String path){
+        this.currentNumOfVoter=0;
+        this.data = data;
+        path = path + data.getId()+".txt";
         try {
             File file = new File(path);
             if (!file.exists()) {
@@ -22,7 +26,16 @@ public class Learner {
         }
     }
 
-    void learn(String s){
+    void processDecisionRequest(Message m){
+        currentNumOfVoter++;
+        if (currentNumOfVoter > data.getNumOfProces()/2 && data.getCurrentValue() == null) {
+            data.setCurrentValue(m.getValue());
+            learn(data.getCurrentValue());
+        }
+
+    }
+
+    private void learn(String s){
         try {
             fw.append(s);
             fw.append("\n");

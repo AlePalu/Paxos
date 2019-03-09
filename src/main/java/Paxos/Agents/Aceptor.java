@@ -5,29 +5,31 @@ import Paxos.Network.MessageType;
 
 public class Aceptor {
 
-    private Long bound = null;
-    private String currentValue = null;
-    Long id;
+    private Long bound;
+    private PaxosData data;
+
+    public Aceptor(PaxosData data){
+        this.bound = (long)0;
+        this.data = data;
+
+    }
 
     Message processPrepareRequest(Message m){
-        if(currentValue == null){
+        if(m.getSenderID()>=bound && data.getCurrentValue() == null) {
             bound = m.getSenderID();
-            currentValue = m.getValue();
+            return new Message(m.getSenderID(), null, MessageType.RESPONDTOPREPAREREQUEST);
         }
-
-        if(m.getSenderID()>=bound && currentValue != null) {
-          // System.out.println(id+" vota " + m.getValue());
-            bound = m.getSenderID();
-           // System.out.println(id + " ha bound: "+bound);
-            return new Message(m.getSenderID(), m.getValue(), MessageType.RESPONDTOPREPAREREQUEST);
-        }
-      //  System.out.println("voto no");
         return null;
     }
 
-    void reset(){
-        bound = null;
-        currentValue = null;
+    Message processAcceptRequest(Message m){
+        Message respond;
+        if (m.getSenderID()<bound)
+            return null;
+        respond = new Message(null,m.getValue(),MessageType.DECISION);
+        respond.setAsBroadcast();
+        return respond;
     }
+
 }
 
