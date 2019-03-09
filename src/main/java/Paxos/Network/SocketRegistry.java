@@ -10,11 +10,19 @@ class SocketRegistry{
     private ConcurrentHashMap<Long, SocketBox> registry;
     private ConcurrentLinkedQueue<SocketBox> pendingSockets;
 
+    private ConcurrentHashMap<String, SocketBox> remoteNodeRegistry;
+    // updated via NAMINGREPLY
+    private ArrayList<String> remoteNodeList;
+    
     private SocketBox namingSocket;
     
     private SocketRegistry(){
 	this.registry = new ConcurrentHashMap<Long, SocketBox>();
 	this.pendingSockets = new ConcurrentLinkedQueue<SocketBox>();
+
+	// required to resolve remote addresses
+	this.remoteNodeRegistry = new ConcurrentHashMap<String, SocketBox>();
+	this.remoteNodeList = new ArrayList<String>();
     }
 
     public static SocketRegistry getInstance(){
@@ -28,6 +36,14 @@ class SocketRegistry{
 	return this.registry;
     }
 
+    public ConcurrentHashMap<String, SocketBox> getRemoteNodeRegistry(){
+	return this.remoteNodeRegistry;
+    }
+
+    public ArrayList<String> getRemoteNodeList(){
+	return this.remoteNodeList;
+    }
+    
     public ConcurrentLinkedQueue<SocketBox> getPendingSockets(){
 	return this.pendingSockets;
     }

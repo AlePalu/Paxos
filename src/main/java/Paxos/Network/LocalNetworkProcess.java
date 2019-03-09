@@ -12,6 +12,7 @@ import com.eclipsesource.json.JsonValue;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -44,7 +45,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		// subscribe the process to the list of connected processes
 		JsonObject SUBSCRIBEmessage = new JsonObject();
-		SUBSCRIBEmessage.add("SENDERID", UUID); // needed to bind my socketBox to my UUID
+		//SUBSCRIBEmessage.add("SENDERID", UUID); // needed to bind my socketBox to my UUID
 		SUBSCRIBEmessage.add("MSGTYPE", MessageType.SUBSCRIBE.toString());
 		this.sendMessage(SUBSCRIBEmessage.toString());
 
@@ -66,7 +67,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    String outboundMessage = outboundQueue.remove();
 		    JsonObject outboundJSONMessage = Json.parse(outboundMessage).asObject();
 		    outboundJSONMessage.add("SENDERID", this.UUID);
-
+ 
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
 		    System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
@@ -125,6 +126,14 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
     // this force sending of DISCOVER message. Be carefull this call blocks the caller until the DISCOVERRESPONSE has been processed
     public void updateConnectedProcessesList() throws InterruptedException{
+	// force update of known node on network
+	JsonObject NAMINGREQUESTmessage = new JsonObject();
+	NAMINGREQUESTmessage.add("MSGTYPE", MessageType.NAMINGREQUEST.toString());
+	this.sendMessage(NAMINGREQUESTmessage.toString());
+	// must wait for naming processing...
+	
+	
+
 	JsonObject DISCOVERmessage = new JsonObject();
 	DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
 	this.sendMessage(DISCOVERmessage.toString());

@@ -3,7 +3,10 @@ package Paxos.Network;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonValue;
+
 import java.util.Map.Entry;
+import java.net.Inet4Address;
 
 public enum MessageType implements TrafficRule{
     // network related messages
@@ -31,12 +34,45 @@ public enum MessageType implements TrafficRule{
 	    
 	    s.sendOut(DISCOVERRESPONSEmessage.toString());
 	}),
-
-    // naming messages are simply forwarded to the naming service process
+    
+    // naming messages
     NAMINGREQUEST("NAMINGREQUEST", (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m)),
     NAMINGSUBSCRIBE("NAMINGSUBSCRIBE", (s,m) -> SocketRegistry.getInstance().setNamingSocket(s)),
-    NAMINGREPLY("NAMINGREPLY", (s,m) -> {}),
-    NAMINGUPDATE("NAMINGUPDATE", (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m)),
+    NAMINGREPLY("NAMINGREPLY", (s,m) -> {
+	    JsonObject Jmessage = Json.parse(m).asObject();
+	    String IP = Jmessage.get("NAME").asString();
+	    try{
+		if(Inet4Address.getLocalHost().getHostAddress().equals(IP)){ // I'm the recipient of the message
+		    // message processing... update list of known remote hosts
+		    JsonArray nodeList = Jmessage.get("NODELIST").asArray();
+		    SocketRegistry.getInstance().getRemoteNodeList().clear();
+		    for(JsonValue node : nodeList){
+			SocketRegistry.getInstance().getRemoteNodeList().add(node.asString());
+		    }
+		    // if request was originated by a local process, notify the request has been processed
+		    if(Jmessage.get("RECIPIENTID") != null){
+			// avoid duplicating NAME field in response
+			Jmessage.remove("NAME");
+			Long receiver = Jmessage.get("RECIPIENTID").asLong();
+			SocketRegistry.getInstance().getRegistry().get(receiver).sendOut(Jmessage.toString());
+		    }
+		}else{
+		    // forward the message to the sender
+		    SocketRegistry.getInstance().getRemoteNodeRegistry().get(IP).sendOut(m);
+		}
+	    }catch(Exception e){
+		return;
+	    }
+	}),
+    NAMINGUPDATE("NAMINGUPDATE", (s,m) -> {
+	    // bind the IP address to this socket
+	    JsonObject Jmessage = Json.parse(m).asObject();
+	    String IP = Jmessage.get("NAME").asString();
+	    SocketRegistry.getInstance().getRemoteNodeRegistry().put(IP, s);
+
+	    // forward message to naming service
+	    SocketRegistry.getInstance().getNamingSocket().sendOut(m);
+	}),
     
     // paxos protocol related messages
     PAXOS("PAXOS", (s,m) -> MessageType.forwardTo(s,m)),
@@ -64,7 +100,7 @@ public enum MessageType implements TrafficRule{
 	    for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
 		socketBroadcast.sendOut(message);
 	    }
-	}else{ // unicast transmission
+	}else{ // unicast transmission 
 	    Long UUIDreceiver = Jmessage.get("RECIPIENTID").asLong();
 	    // get the socket binded to this UUID
 	    SocketBox receiverSocket = SocketRegistry.getInstance().getRegistry().get(UUIDreceiver);

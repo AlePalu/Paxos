@@ -7,6 +7,10 @@ import java.net.Socket;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+import java.net.Inet4Address;
+
 public class SocketBox{
 
     private Socket socket;
@@ -33,8 +37,13 @@ public class SocketBox{
     }
 
     public void sendOut(String message){
+	JsonObject outboundJSONMessage = Json.parse(message).asObject();
 	try{
-	    this.socketOutputStream.write(message);
+	    // automatically add the IP of the machine where the local process is running
+	    outboundJSONMessage.add("NAME", Inet4Address.getLocalHost().getHostAddress());
+
+	    // send the message
+	    this.socketOutputStream.write(outboundJSONMessage.toString());
 	    this.socketOutputStream.newLine();
 	    this.socketOutputStream.flush();
 	}catch(Exception e){
