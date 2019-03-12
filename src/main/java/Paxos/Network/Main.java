@@ -46,12 +46,6 @@ class Main{
 		NAMINGUPDATEmessage.add("MSGTYPE", MessageType.NAMINGUPDATE.toString());
 		NAMINGUPDATEmessage.add("NAME", Inet4Address.getLocalHost().getHostAddress());
 		SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage.toString());
-
-		//debug only
-		JsonObject aa = new JsonObject();
-		aa.add("MSGTYPE", MessageType.NAMINGREQUEST.toString());
-		aa.add("NAME", Inet4Address.getLocalHost().getHostAddress());
-		SocketRegistry.getInstance().getNamingSocket().sendOut(aa.toString());
 	    }
 	}catch(Exception e){
 	    return;
