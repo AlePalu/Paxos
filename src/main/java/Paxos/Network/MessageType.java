@@ -44,8 +44,15 @@ public enum MessageType implements TrafficRule{
 		DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
 		DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
 		DISCOVERRESPONSEmessage.add("RECIPIENTID", Jmessage.get("SENDERID").asLong());
-		
-		s.sendOut(DISCOVERRESPONSEmessage.toString());
+		DISCOVERRESPONSEmessage.add("FORWARDTYPE", ForwardType.UNICAST.toString());
+		try{
+		    if(Inet4Address.getLocalHost().getHostAddress().equals(Jmessage.get("NAME").asString())) // forward locally
+			s.sendOut(DISCOVERRESPONSEmessage.toString());
+		    else // to remote node
+			SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get("NAME").asString()).sendOut(DISCOVERRESPONSEmessage.toString());
+		}catch(Exception e){
+
+		}
 	    }),
 	DISCOVERREQUEST("DISCOVERREQUEST", (s, m)->{
 		// reply with the list of local processes
@@ -86,9 +93,6 @@ public enum MessageType implements TrafficRule{
 				}
 				// remove inactive sockets binded to inactive IPs
 				for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
-
-				    System.out.printf(remoteSocket.getKey()+"%n");
-
 				    // this IP is not recongnized as active by the name server, remove it...
 				    if(!SocketRegistry.getInstance().getRemoteNodeList().contains(remoteSocket.getKey())){
 					SocketRegistry.getInstance().getRemoteNodeRegistry().remove(remoteSocket.getKey());

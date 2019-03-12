@@ -67,6 +67,7 @@ public class NamingRequestHandler implements Runnable{
 			NAMINGREPLYmessage.add("MSGTYPE", MessageType.NAMINGREPLY.toString());
 			NAMINGREPLYmessage.add("NODELIST", nodesList);
 			NAMINGREPLYmessage.add("RECIPIENTID", JSONmessage.get("SENDERID").asLong());
+			NAMINGREPLYmessage.add("NAME", JSONmessage.get("NAME").asString());
 			
 			this.socketBox.sendOut(NAMINGREPLYmessage.toString());
 		    }
