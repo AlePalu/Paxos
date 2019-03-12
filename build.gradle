@@ -50,7 +50,7 @@ task NetworkJarTest(type: Jar){
 	
      }
      manifest{
-	attributes('Main-Class':'Paxos.NetworkTest.Main')
+	attributes('Main-Class':'Paxos.NetworkTest.MainTest')
      }
      baseName = project.name + '-NetworkTest'
      from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }

@@ -18,21 +18,22 @@ class MainTest {
 	    NetworkInterface myProcess = new LocalNetworkProcess("127.0.0.1", 40000, pid);
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
-    
+
+	    myProcess.updateConnectedProcessesList();
 	    while(true){
 		Thread.sleep(100);
-		myProcess.updateConnectedProcessesList();
+		//myProcess.updateConnectedProcessesList();
 		
 		/*Message msg = new Message(null, "ciao" , MessageType.PAXOS);
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());*/
 
-		Message msg = new Message(null, "prova", MessageType.NAMINGREQUEST);
+		/*		Message msg = new Message(null, "prova", MessageType.NAMINGREQUEST);
 		myProcess.sendMessage(msg.getJSON());
 
 		JsonObject nn = new JsonObject();
 		nn.add("MSGTYPE", MessageType.NAMINGUPDATE.toString());
-		myProcess.sendMessage(nn.toString());
+		myProcess.sendMessage(nn.toString());*/
 		/*
 		if(myProcess.isThereAnyMessage()){
 		    Message receivedMessage = new Message(myProcess.receiveMessage());

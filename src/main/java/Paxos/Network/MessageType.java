@@ -21,18 +21,49 @@ public enum MessageType implements TrafficRule{
 			SocketRegistry.getInstance().getPendingSockets().remove(s);
 		}
 	}),
-	DISCOVERRESPONSE("DISCOVERRESPONSE"),
+
+	// messages used to keep track of processes currently active on network
+	DISCOVERRESPONSE("DISCOVERRESPONSE", (s,m) -> {
+		// if TrafficHandler receives a DISCOVERRESPONSE, then it must come from a remote node
+		// local DISCOVERRESPONSE messages are sent directly to the process which originated the request
+
+		// forward to the recipient
+		MessageType.forwardTo(s,m);
+	    }),
 	DISCOVER("DISCOVER",(s, m)->{
 		JsonArray connectedProcesses = new JsonArray();
 		for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
 			connectedProcesses.add(entry.getKey()); // building array with known UUID
 		}
+
 		// reply back with the list of connected processes
 		JsonObject DISCOVERRESPONSEmessage = new JsonObject();
 		DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
 		DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
 
 		s.sendOut(DISCOVERRESPONSEmessage.toString());
+	    }),
+	DISCOVERREQUEST("DISCOVERREQUEST", (s, m)->{
+		// reply with the list of local processes
+		JsonArray connectedProcesses = new JsonArray();
+		for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
+			connectedProcesses.add(entry.getKey()); // building array with known UUID
+		}
+	
+		JsonObject DISCOVERRESPONSEmessage = new JsonObject();
+		DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
+		DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
+
+		s.sendOut(DISCOVERRESPONSEmessage.toString());
+			
+		// sends DISCOVER messages to all known remote nodes
+		for (Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()) {
+		    System.out.printf(remoteSocket.getKey()+"%n");
+		    JsonObject DISCOVERmessage = new JsonObject();
+		    DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
+
+		    remoteSocket.getValue().sendOut(DISCOVERmessage.toString());
+		}
 	}),
 
 	// naming messages
@@ -43,12 +74,20 @@ public enum MessageType implements TrafficRule{
 		String IP = Jmessage.get("NAME").asString();
 		try{
 			if(Inet4Address.getLocalHost().getHostAddress().equals(IP)){ // I'm the recipient of the message
-				// message processing... update list of known remote hosts
+				// update list of known remote hosts
 				JsonArray nodeList = Jmessage.get("NODELIST").asArray();
 				SocketRegistry.getInstance().getRemoteNodeList().clear();
 				for(JsonValue node : nodeList){
 					SocketRegistry.getInstance().getRemoteNodeList().add(node.asString());
 				}
+				// remove inactive sockets binded to inactive IPs
+				for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+				    // this IP is not recongnized as active by the name server, remove it...
+				    if(!SocketRegistry.getInstance().getRemoteNodeList().contains(remoteSocket.getKey())){
+					SocketRegistry.getInstance().getRemoteNodeRegistry().remove(remoteSocket.getKey());
+				    }
+				}
+				
 				// if request was originated by a local process, notify the request has been processed
 				if(Jmessage.get("RECIPIENTID") != null){
 					// avoid duplicating NAME field in response

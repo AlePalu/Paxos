@@ -5,14 +5,16 @@ import Paxos.Network.MessageType;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,10 +27,15 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     private ConcurrentLinkedQueue<String> inboundQueue;
     private ConcurrentLinkedQueue<String> outboundQueue;
     private long UUID;
+    
     private ArrayList<Long> connectedProcesses;
 
+    // used for DISCOVER messages
+    private Set<String> pendingDISCOVERREPLY;
+    
     private final Lock lock;
     private final Condition discoverMessageLock;
+    private final Condition namingLock;
     
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
 		Socket processSocket = new Socket(ip, port); // connect to NetworkManager server
@@ -42,17 +49,15 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		this.lock = new ReentrantLock();
 		this.discoverMessageLock = lock.newCondition();
-
+		this.namingLock = lock.newCondition();
+		
 		// subscribe the process to the list of connected processes
 		JsonObject SUBSCRIBEmessage = new JsonObject();
 		//SUBSCRIBEmessage.add("SENDERID", UUID); // needed to bind my socketBox to my UUID
 		SUBSCRIBEmessage.add("MSGTYPE", MessageType.SUBSCRIBE.toString());
 		this.sendMessage(SUBSCRIBEmessage.toString());
 
-		// just send a DISCOVER to get a first list of connected processes...
-		JsonObject DISCOVERmessage = new JsonObject();
-		DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
-		this.sendMessage(DISCOVERmessage.toString());
+		this.pendingDISCOVERREPLY = new HashSet<String>();
     }
 
     public void run(){
@@ -81,16 +86,28 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		    // handle DISCOVERRESPONSE immediately
 		    JsonObject jsonMsg = Json.parse(message).asObject();
-		    if(jsonMsg.get("MSGTYPE")!=null && jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
-			this.connectedProcesses.clear();
-			// get the list of UUID
+		    if(jsonMsg.get("MSGTYPE").asString().equals(MessageType.DISCOVERRESPONSE.toString())){
+		        // get the list of UUID
 			for(JsonValue UUID : jsonMsg.get("CPLIST").asArray()){
 			    this.connectedProcesses.add(UUID.asLong());
 			}
-
-			// signal that DISCOVERMESSAGE has been processed
+			this.pendingDISCOVERREPLY.remove(jsonMsg.get("NAME").asString());
+			
+			// signal that all DISCOVERREPLY have been processed
+			if(this.pendingDISCOVERREPLY.isEmpty()){
+			    lock.lock();
+			    discoverMessageLock.signalAll();
+			    lock.unlock();
+			}
+		    }else if(jsonMsg.get("MSGTYPE").asString().equals(MessageType.NAMINGREPLY.toString())){
+			this.pendingDISCOVERREPLY.clear();
+			// keep track of the DISCOVERREPLY we must wait for
+			for(JsonValue ip : jsonMsg.get("NODELIST").asArray()){
+			    this.pendingDISCOVERREPLY.add(ip.asString());
+			}
+			// signal naming is updated
 			lock.lock();
-			discoverMessageLock.signalAll();
+			namingLock.signalAll();
 			lock.unlock();
 		    }
 		    else{
@@ -130,15 +147,25 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	JsonObject NAMINGREQUESTmessage = new JsonObject();
 	NAMINGREQUESTmessage.add("MSGTYPE", MessageType.NAMINGREQUEST.toString());
 	this.sendMessage(NAMINGREQUESTmessage.toString());
-	// must wait for naming processing...
-	
-	
 
-	JsonObject DISCOVERmessage = new JsonObject();
-	DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
-	this.sendMessage(DISCOVERmessage.toString());
+	// wait for naming processing...
+	lock.lock();
+	try {
+	    namingLock.await();
+	}finally{
+	    lock.unlock();
+	}
 
-	// blocking call
+	// reset the current list of known processes
+	this.connectedProcesses.clear();
+	
+	JsonObject DISCOVERREQUESTmessage = new JsonObject();
+	DISCOVERREQUESTmessage.add("MSGTYPE", MessageType.DISCOVERREQUEST.toString());
+	this.sendMessage(DISCOVERREQUESTmessage.toString());
+
+	System.out.printf("must wait for: "+this.pendingDISCOVERREPLY.toString()+"%n");
+	
+	// wait for disover processing...
 	lock.lock();
 	try{
 	    discoverMessageLock.await();
