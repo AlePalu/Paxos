@@ -91,6 +91,7 @@ public class NamingRequestHandler implements Runnable{
 	    while(ip != null){
 		if(name.equals(ip)) // name already present
 		    return;
+		
 		ip = reader.readLine();
 	    }
 	}catch(Exception e){

@@ -40,8 +40,10 @@ public class SocketBox{
 	JsonObject outboundJSONMessage = Json.parse(message).asObject();
 	try{
 	    // automatically add the IP of the machine where the local process is running
-	    outboundJSONMessage.add("NAME", Inet4Address.getLocalHost().getHostAddress());
-
+	    JsonObject Jmessage = Json.parse(message).asObject();
+	    if (Jmessage.get("NAME")==null) // if a name field is already present, don't append a new one (this cause problems with name server)
+		outboundJSONMessage.add("NAME", Inet4Address.getLocalHost().getHostAddress());
+	    
 	    // send the message
 	    this.socketOutputStream.write(outboundJSONMessage.toString());
 	    this.socketOutputStream.newLine();

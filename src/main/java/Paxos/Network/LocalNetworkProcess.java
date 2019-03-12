@@ -161,6 +161,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	
 	JsonObject DISCOVERREQUESTmessage = new JsonObject();
 	DISCOVERREQUESTmessage.add("MSGTYPE", MessageType.DISCOVERREQUEST.toString());
+
 	this.sendMessage(DISCOVERREQUESTmessage.toString());
 
 	System.out.printf("must wait for: "+this.pendingDISCOVERREPLY.toString()+"%n");

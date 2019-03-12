@@ -22,7 +22,9 @@ class MainTest {
 	    myProcess.updateConnectedProcessesList();
 	    while(true){
 		Thread.sleep(100);
-		//myProcess.updateConnectedProcessesList();
+		myProcess.updateConnectedProcessesList();
+
+		System.out.printf(myProcess.lookupConnectedProcesses().toString()+"%n");
 		
 		/*Message msg = new Message(null, "ciao" , MessageType.PAXOS);
 		msg.setAsBroadcast();

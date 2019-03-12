@@ -36,11 +36,15 @@ public enum MessageType implements TrafficRule{
 			connectedProcesses.add(entry.getKey()); // building array with known UUID
 		}
 
+		// parse the message to get the ID of the sender
+		JsonObject Jmessage = Json.parse(m).asObject();
+		
 		// reply back with the list of connected processes
 		JsonObject DISCOVERRESPONSEmessage = new JsonObject();
 		DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
 		DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
-
+		DISCOVERRESPONSEmessage.add("RECIPIENTID", Jmessage.get("SENDERID").asLong());
+		
 		s.sendOut(DISCOVERRESPONSEmessage.toString());
 	    }),
 	DISCOVERREQUEST("DISCOVERREQUEST", (s, m)->{
@@ -53,15 +57,15 @@ public enum MessageType implements TrafficRule{
 		JsonObject DISCOVERRESPONSEmessage = new JsonObject();
 		DISCOVERRESPONSEmessage.add("MSGTYPE", MessageType.DISCOVERRESPONSE.toString());
 		DISCOVERRESPONSEmessage.add("CPLIST", connectedProcesses);
-
 		s.sendOut(DISCOVERRESPONSEmessage.toString());
-			
+
+		JsonObject Jmessage = Json.parse(m).asObject();
 		// sends DISCOVER messages to all known remote nodes
 		for (Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()) {
-		    System.out.printf(remoteSocket.getKey()+"%n");
 		    JsonObject DISCOVERmessage = new JsonObject();
 		    DISCOVERmessage.add("MSGTYPE", MessageType.DISCOVER.toString());
-
+		    DISCOVERmessage.add("SENDERID", Jmessage.get("SENDERID").asLong());
+		    
 		    remoteSocket.getValue().sendOut(DISCOVERmessage.toString());
 		}
 	}),
@@ -82,6 +86,9 @@ public enum MessageType implements TrafficRule{
 				}
 				// remove inactive sockets binded to inactive IPs
 				for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+
+				    System.out.printf(remoteSocket.getKey()+"%n");
+
 				    // this IP is not recongnized as active by the name server, remove it...
 				    if(!SocketRegistry.getInstance().getRemoteNodeList().contains(remoteSocket.getKey())){
 					SocketRegistry.getInstance().getRemoteNodeRegistry().remove(remoteSocket.getKey());
