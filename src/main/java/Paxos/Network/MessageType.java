@@ -7,6 +7,7 @@ import com.eclipsesource.json.JsonValue;
 
 import java.util.Map.Entry;
 import java.net.Inet4Address;
+import java.net.Socket;
 
 public enum MessageType implements TrafficRule{
 	// network related messages
@@ -91,6 +92,17 @@ public enum MessageType implements TrafficRule{
 				for(JsonValue node : nodeList){
 					SocketRegistry.getInstance().getRemoteNodeList().add(node.asString());
 				}
+
+				// open connection with new remote nodes
+			        for(String remoteIP : SocketRegistry.getInstance().getRemoteNodeList()){
+				    if(!SocketRegistry.getInstance().getRemoteNodeRegistry().keySet().contains(remoteIP)){
+					// open connection with remote node
+					Socket socket = new Socket(remoteIP, 40000);
+					SocketBox socketBox = new SocketBox(socket);
+					SocketRegistry.getInstance().getRemoteNodeRegistry().put(remoteIP, socketBox);
+				    }
+				}
+				
 				// remove inactive sockets binded to inactive IPs
 				for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
 				    // this IP is not recongnized as active by the name server, remove it...
@@ -101,10 +113,10 @@ public enum MessageType implements TrafficRule{
 				
 				// if request was originated by a local process, notify the request has been processed
 				if(Jmessage.get("RECIPIENTID") != null){
-					// avoid duplicating NAME field in response
-					Jmessage.remove("NAME");
-					Long receiver = Jmessage.get("RECIPIENTID").asLong();
-					SocketRegistry.getInstance().getRegistry().get(receiver).sendOut(Jmessage.toString());
+				    // avoid duplicating NAME field in response
+				    Jmessage.remove("NAME");
+				    Long receiver = Jmessage.get("RECIPIENTID").asLong();
+				    SocketRegistry.getInstance().getRegistry().get(receiver).sendOut(Jmessage.toString());
 				}
 			}else{
 				// forward the message to the sender
@@ -119,7 +131,7 @@ public enum MessageType implements TrafficRule{
 		JsonObject Jmessage = Json.parse(m).asObject();
 		String IP = Jmessage.get("NAME").asString();
 		SocketRegistry.getInstance().getRemoteNodeRegistry().put(IP, s);
-
+		
 		// forward message to naming service
 		SocketRegistry.getInstance().getNamingSocket().sendOut(m);
 	}),
