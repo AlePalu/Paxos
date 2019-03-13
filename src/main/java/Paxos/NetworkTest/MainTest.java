@@ -21,7 +21,7 @@ class MainTest {
 
 	    myProcess.updateConnectedProcessesList();
 	    while(true){
-		Thread.sleep(100);
+		Thread.sleep(500);
 		myProcess.updateConnectedProcessesList();
 
 		System.out.printf(myProcess.lookupConnectedProcesses().toString()+"%n");

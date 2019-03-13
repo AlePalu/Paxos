@@ -3,8 +3,6 @@ package Paxos.Network;
 import java.net.Inet4Address;
 import java.net.Socket;
 
-import com.eclipsesource.json.JsonObject;
-
 class Main{
 
     public static void main(String[] args) {
@@ -18,7 +16,6 @@ class Main{
 	
 	System.out.printf("[Main]: started\n");
 	System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");
-
 	
 	try{
 	    ConnectionHandler connectionHandler = new ConnectionHandler(40000);
@@ -30,7 +27,7 @@ class Main{
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
 
 		// give time to network infrastructure to go up
-		Thread.sleep(2000);
+		Thread.sleep(1000);
 		
 		NamingRequestHandler namingHandler = new NamingRequestHandler("127.0.0.1", 40000);
 		Thread namingThread = new Thread(namingHandler);
@@ -42,10 +39,8 @@ class Main{
 		SocketBox namingSocketBox = new SocketBox(namingSocket);
 		SocketRegistry.getInstance().setNamingSocket(namingSocketBox);
 
-		JsonObject NAMINGUPDATEmessage = new JsonObject();
-		NAMINGUPDATEmessage.add("MSGTYPE", MessageType.NAMINGUPDATE.toString());
-		NAMINGUPDATEmessage.add("NAME", Inet4Address.getLocalHost().getHostAddress());
-		SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage.toString());
+		String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());
+		SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage);
 	    }
 	}catch(Exception e){
 	    return;

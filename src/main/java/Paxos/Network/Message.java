@@ -41,13 +41,13 @@ public class Message{
     public Message(String message){
         JsonObject jsonMessage = Json.parse(message).asObject();
         if(this.recipientID!=null)
-            this.recipientID = jsonMessage.get("RECIPIENTID").asLong();
-        this.messageType = jsonMessage.get("MSGTYPE").asString();
+            this.recipientID = jsonMessage.get(MessageField.RECIPIENTID.toString()).asLong();
+        this.messageType = jsonMessage.get(MessageField.MSGTYPE.toString()).asString();
         if(!messageType.equals(MessageType.NAMINGREPLY.toString())) {
-            if(!jsonMessage.get("VALUE").isNull())
-                this.value = jsonMessage.get("VALUE").asString();
+            if(!jsonMessage.get(MessageField.VALUE.toString()).isNull())
+                this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
             // this is automatically inserted by the routing logic
-            this.senderID = jsonMessage.get("SENDERID").asLong();
+            this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
         }
     }
 
@@ -74,14 +74,14 @@ public class Message{
     public String getJSON(){
         JsonObject jsonMessageFormat = new JsonObject();
         if(this.recipientID!=null) // broadcast messages don't require a recipientID
-            jsonMessageFormat.add("RECIPIENTID", this.recipientID);
-        jsonMessageFormat.add("VALUE", this.value);
-        jsonMessageFormat.add("MSGTYPE", this.messageType);
+            jsonMessageFormat.add(MessageField.RECIPIENTID.toString(), this.recipientID);
+        jsonMessageFormat.add(MessageField.VALUE.toString(), this.value);
+        jsonMessageFormat.add(MessageField.MSGTYPE.toString(), this.messageType);
 
         if(this.isBroadcast)
-            jsonMessageFormat.add("FORWARDTYPE", ForwardType.BROADCAST.toString());
+            jsonMessageFormat.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
         else
-            jsonMessageFormat.add("FORWARDTYPE", ForwardType.UNICAST.toString());
+            jsonMessageFormat.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
 
         return jsonMessageFormat.toString();
     }
