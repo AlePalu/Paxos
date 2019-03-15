@@ -2,6 +2,7 @@ package Paxos.NetworkTest;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.net.InetAddress;
 
 import com.eclipsesource.json.JsonObject;
 
@@ -15,7 +16,7 @@ class MainTest {
 	final long pid = runtime.getPid();
 
 	try{
-	    NetworkInterface myProcess = new LocalNetworkProcess("127.0.0.1", 40000, pid);
+	    NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, pid);
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 

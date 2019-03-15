@@ -20,7 +20,7 @@ class Main{
 	try{
 	    ConnectionHandler connectionHandler = new ConnectionHandler(40000);
 	    Thread connectionHandlerThread = new Thread(connectionHandler);
-	    // start thread
+	    // bringing up network infrastructure
 	    connectionHandlerThread.start();
 	    
 	    if(Inet4Address.getLocalHost().getHostAddress().equals(namingNodeIP)){
@@ -29,7 +29,7 @@ class Main{
 		// give time to network infrastructure to go up
 		Thread.sleep(1000);
 		
-		NamingRequestHandler namingHandler = new NamingRequestHandler("127.0.0.1", 40000);
+		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000);
 		Thread namingThread = new Thread(namingHandler);
 		namingThread.start();
 	    }else{
@@ -41,7 +41,14 @@ class Main{
 
 		String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());
 		SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage);
+
+		String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
+		SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGREQUESTmessage);
 	    }
+
+	    // initialize the tracker, 2 second period
+	    Tracker.init(2);
+	    
 	}catch(Exception e){
 	    return;
 	}

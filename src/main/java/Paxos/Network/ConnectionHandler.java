@@ -32,6 +32,8 @@ class ConnectionHandler implements Runnable{
 		SocketBox socketBox = new SocketBox(newSocket);
 		// add the client to the opened socket registry, but still pending to be binded to a UUID
 		SocketRegistry.getInstance().getPendingSockets().add(socketBox);
+
+		System.out.printf("[ConnectionHandler]: new client connected from "+newSocket.getInetAddress().getHostAddress()+"%n");	
 	    }catch(IOException exception){
 		continue;
 	    }

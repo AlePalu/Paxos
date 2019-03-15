@@ -85,8 +85,13 @@ class MessageForgery{
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGREPLY.toString());
 	Jmessage.add(MessageField.NODELIST.toString(), nodeList);
-	Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
+	if(recipientID != null)
+	    Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
 	Jmessage.add(MessageField.NAME.toString(), name);
 	return Jmessage.toString();
+    }
+
+    public static String forgeNAMINGREPLY(JsonArray nodeList, String name){
+	return forgeNAMINGREPLY(nodeList, null, name);
     }
 }

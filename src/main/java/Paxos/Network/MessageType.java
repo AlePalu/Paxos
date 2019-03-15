@@ -11,11 +11,9 @@ import java.net.Socket;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.ArrayList;
 
-import java.util.HashSet;
-
-public enum MessageType implements TrafficRule{
-	// network related messages
+public enum MessageType implements TrafficRule{ 
 	SUBSCRIBE("SUBSCRIBE",
 		  (s, m)->{
 		      // SUBSCRIBE messages are processed only once
@@ -93,7 +91,7 @@ public enum MessageType implements TrafficRule{
 				remoteSocket.getValue().sendOut(DISCOVERmessage);
 			    }
 			}),
-	// naming messages
+	// messages used for naming services
 	NAMINGREQUEST("NAMINGREQUEST",
 		      (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m),
 		      (o) -> {
@@ -115,9 +113,15 @@ public enum MessageType implements TrafficRule{
 			  }
 
 			  // send response back
-			  String NAMINGREPLYmessage = MessageForgery.forgeNAMINGREPLY(nodesList,
-										      Jmessage.get(MessageField.SENDERID.toString()).asLong(),
-										      Jmessage.get(MessageField.NAME.toString()).asString());
+			  String NAMINGREPLYmessage;
+			  if(Jmessage.get(MessageField.SENDERID.toString()) != null){ // request originated by a remote process
+			      NAMINGREPLYmessage = MessageForgery.forgeNAMINGREPLY(nodesList,
+										   Jmessage.get(MessageField.SENDERID.toString()).asLong(),
+										   Jmessage.get(MessageField.NAME.toString()).asString());
+			  }else{ // request originated by a remote network infrastructure
+			      NAMINGREPLYmessage = MessageForgery.forgeNAMINGREPLY(nodesList,
+										   Jmessage.get(MessageField.NAME.toString()).asString());
+			  }
 			  process.getSocketBox().sendOut(NAMINGREPLYmessage);
 		      }),
 	NAMINGSUBSCRIBE("NAMINGSUBSCRIBE",
@@ -136,7 +140,9 @@ public enum MessageType implements TrafficRule{
 				}
 
 				// open connection with new remote nodes
-			        for(String remoteIP : SocketRegistry.getInstance().getRemoteNodeList()){
+				ArrayList<String> remoteNodes = SocketRegistry.getInstance().getRemoteNodeList();
+				remoteNodes.remove(Inet4Address.getLocalHost().getHostAddress());
+			        for(String remoteIP : remoteNodes){
 				    if(!SocketRegistry.getInstance().getRemoteNodeRegistry().keySet().contains(remoteIP)){
 					// open connection with remote node
 					Socket socket = new Socket(remoteIP, 40000);
@@ -190,7 +196,7 @@ public enum MessageType implements TrafficRule{
 			 JsonObject Jmessage = Json.parse(m).asObject();
 			 String IP = Jmessage.get(MessageField.NAME.toString()).asString();
 			 SocketRegistry.getInstance().getRemoteNodeRegistry().put(IP, s);
-		
+			 
 			 // forward message to naming service
 			 SocketRegistry.getInstance().getNamingSocket().sendOut(m);
 		     },
@@ -203,12 +209,14 @@ public enum MessageType implements TrafficRule{
 			 String newName = Jmessage.get(MessageField.NAME.toString()).asString();
 			 // add node to the list of available nodes
 			 process.recordName(newName);
-		    
-		     }),
 
+			 System.out.printf("[NamingRequestHandler]: remote node "+newName+" registered%n");
+		     }),
+	// messages used to keep the internal state updated
+	//PING("PING"),
+	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
-	PAXOS("PAXOS", (s,m) -> MessageType.forwardTo(s,m)),
-	PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),
+        PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),
 	RESPONDTOPREPAREREQUEST("RESPONDTOPREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),
 	ACCEPTREQUEST("ACCEPTREQUEST", (s,m) -> MessageType.forwardTo(s,m)),
 	DECISION("DECISION", (s,m) -> MessageType.forwardTo(s,m));

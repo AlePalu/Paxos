@@ -8,16 +8,11 @@ import java.net.Inet4Address;
 import java.net.Socket;
 import java.util.HashSet;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
-
 public class NamingRequestHandler implements Runnable{
 
     File nodesOnNetworkFile;
     SocketBox socketBox;
     HashSet<MessageType> messageToProcess;
-
     
     public NamingRequestHandler(String ip, int port){
 	this.nodesOnNetworkFile = new File("processList.txt");
@@ -37,6 +32,7 @@ public class NamingRequestHandler implements Runnable{
 	    String myIP = Inet4Address.getLocalHost().getHostAddress();
 	    recordName(myIP);
 
+	    // populate the set with messages name server has to process
 	    messageToProcess = new HashSet<MessageType>();
 	    messageToProcess.add(MessageType.NAMINGREQUEST);
 	    messageToProcess.add(MessageType.NAMINGUPDATE);
@@ -78,7 +74,6 @@ public class NamingRequestHandler implements Runnable{
     public SocketBox getSocketBox(){
 	return this.socketBox;
     }
-
     
     public void recordName(String name){
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
@@ -95,7 +90,6 @@ public class NamingRequestHandler implements Runnable{
 	    String in = name+"\n";
 	    fileWriter.write(in);
 	    fileWriter.flush();
-	    fileWriter.close();
         }catch(Exception e){
 	    return;
 	}

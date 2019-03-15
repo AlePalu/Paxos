@@ -42,13 +42,13 @@ public class Message{
         JsonObject jsonMessage = Json.parse(message).asObject();
         if(this.recipientID!=null)
             this.recipientID = jsonMessage.get(MessageField.RECIPIENTID.toString()).asLong();
-        this.messageType = jsonMessage.get(MessageField.MSGTYPE.toString()).asString();
-        if(!messageType.equals(MessageType.NAMINGREPLY.toString())) {
-            if(!jsonMessage.get(MessageField.VALUE.toString()).isNull())
-                this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
-            // this is automatically inserted by the routing logic
-            this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
-        }
+
+	this.messageType = jsonMessage.get(MessageField.MSGTYPE.toString()).asString();
+	if(!jsonMessage.get(MessageField.VALUE.toString()).isNull())
+	    this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
+
+	// this is automatically inserted by the routing logic
+	this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
     }
 
     public void setAsBroadcast(){

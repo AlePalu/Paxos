@@ -7,10 +7,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class SocketRegistry{
 
     private static SocketRegistry instance;
+    
     private ConcurrentHashMap<Long, SocketBox> registry;
     private ConcurrentLinkedQueue<SocketBox> pendingSockets;
 
     private ConcurrentHashMap<String, SocketBox> remoteNodeRegistry;
+
     // updated via NAMINGREPLY
     private ArrayList<String> remoteNodeList;
     
