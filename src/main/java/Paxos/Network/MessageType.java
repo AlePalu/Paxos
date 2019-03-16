@@ -213,7 +213,19 @@ public enum MessageType implements TrafficRule{
 			 System.out.printf("[NamingRequestHandler]: remote node "+newName+" registered%n");
 		     }),
 	// messages used to keep the internal state updated
-	//PING("PING"),
+	PING("PING",
+	     (s,m) -> {
+		 // remove the ticket, since the message has been received
+		 JsonObject Jmessage = Json.parse(m).asObject();
+		 Tracker.getInstance().removeTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), Jmessage.get(MessageField.TICKET.toString()).asLong());
+	     },
+	     (o) -> {
+		 // reply back with the same message
+		 LocalNetworkProcess process = (LocalNetworkProcess) o[0];
+		 String message = (String) o[1];
+
+		 process.sendMessage(message);
+	     }),
 	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
         PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),

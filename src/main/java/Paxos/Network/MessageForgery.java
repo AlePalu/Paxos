@@ -1,5 +1,7 @@
 package Paxos.Network;
 
+import java.util.Random;
+
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 
@@ -11,7 +13,8 @@ enum MessageField{
     SENDERID("SENDERID"),
     NAME("NAME"),
     VALUE("VALUE"),
-    NODELIST("NODELIST");
+    NODELIST("NODELIST"),
+    TICKET("TICKET");
     
     private String name;
     
@@ -94,4 +97,17 @@ class MessageForgery{
     public static String forgeNAMINGREPLY(JsonArray nodeList, String name){
 	return forgeNAMINGREPLY(nodeList, null, name);
     }
+
+    public static String forgePING(Long recipientID){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PING.toString());
+	Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
+	
+	Random rng = new Random();
+	Long randomNumber = Math.abs(rng.nextLong());
+	Jmessage.add(MessageField.TICKET.toString(), randomNumber);
+
+	return Jmessage.toString();
+    }
+
 }

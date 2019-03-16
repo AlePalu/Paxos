@@ -53,10 +53,12 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.namingLock = lock.newCondition();
 	
 		this.pendingDISCOVERREPLY = new HashSet<String>();
-		
+
+		// message to process
 		this.messageToProcess = new HashSet<MessageType>();
 		this.messageToProcess.add(MessageType.DISCOVERREPLY);
 		this.messageToProcess.add(MessageType.NAMINGREPLY);
+		this.messageToProcess.add(MessageType.PING);
 		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();
