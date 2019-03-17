@@ -2,7 +2,7 @@ package Paxos.Network;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
@@ -15,24 +15,26 @@ class Ticket{
     Long timestamp;
     int expirationThreshold;
     Long UUID;
-
-    public Ticket(Long timestamp, int expirationThreshold, Long UUID){
+    String ticketType;
+    
+    public Ticket(Long timestamp, int expirationThreshold, Long UUID, String ticketType){
 	this.timestamp = timestamp;
 	this.expirationThreshold = expirationThreshold;
 	this.UUID = UUID;
+	this.ticketType = ticketType;
     }
     
 }
 
 class Tracker{
 
-    private HashMap<Long, ArrayList<Ticket>> trackingList;
+    private ConcurrentHashMap<Long, ArrayList<Ticket>> trackingList;
     private Timer timer;
     
     private static Tracker instance;
     
     private Tracker(int delay){
-	this.trackingList = new HashMap<Long, ArrayList<Ticket>>();
+	this.trackingList = new ConcurrentHashMap<Long, ArrayList<Ticket>>();
 
 	System.out.printf("[Tracker]: ready to handle periodic events%n");
         
@@ -44,8 +46,16 @@ class Tracker{
 		    for(Entry<Long, ArrayList<Ticket>> entry : trackingList.entrySet()){
 			for(Ticket t : entry.getValue()){
 			    if(Tracker.getInstance().isExpired(t)){
-				System.out.printf("[Tracker]: ticket for process "+entry.getKey()+" expired.%n");
-				
+				if(t.ticketType.equals(MessageType.PING.toString())){
+				    System.out.printf("[Tracker]: I was not able to receive any response from "+entry.getKey()+". Removing any reference to it.%n");
+
+				    // removing the association from socket registry
+				    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+
+				    // remove any ticket associated with it
+				    trackingList.remove(entry.getKey());
+				}
+			
 			    }
 			}
 		    }
@@ -56,14 +66,13 @@ class Tracker{
 	// periodically keep track of processes still alive
 	timer.scheduleAtFixedRate(new TimerTask(){
 		public void run() {
-		    System.out.printf("[Tracker]: start polling cycle...%n");
 		    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
 			String PINGmessage = MessageForgery.forgePING(entry.getKey());
 
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
-			// process considered alive if response arrives in at most 10 seconds
-			Tracker.getInstance().issueTicket(entry.getKey(), 10000, Jmessage.get(MessageField.TICKET.toString()).asLong());
+			// process considered alive if response arrives in at most 5 seconds
+			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
 			// send the message
 			entry.getValue().sendOut(PINGmessage);
 		    }
@@ -83,9 +92,9 @@ class Tracker{
 	return instance;
     }
     
-    public void issueTicket(Long UUID, int expirationThreshold, Long ticketUUID){
+    public void issueTicket(Long UUID, int expirationThreshold, Long ticketUUID, String ticketType){
 	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID);
+	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType);
 
 	// create a field for this UUID
 	if(!trackingList.keySet().contains(UUID))
