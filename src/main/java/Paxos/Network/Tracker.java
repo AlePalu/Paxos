@@ -15,6 +15,7 @@ class Ticket{
     Long timestamp;
     int expirationThreshold;
     Long UUID;
+    String namingUUID;
     String ticketType;
     
     public Ticket(Long timestamp, int expirationThreshold, Long UUID, String ticketType){
@@ -23,19 +24,29 @@ class Ticket{
 	this.UUID = UUID;
 	this.ticketType = ticketType;
     }
-    
+
+    // used for name server tickets
+    public Ticket(Long timestamp, int expirationThreshold, String namingUUID, String ticketType){
+	this.timestamp = timestamp;
+	this.expirationThreshold = expirationThreshold;
+	this.namingUUID = namingUUID;
+	this.ticketType = ticketType;
+    } 
 }
 
 class Tracker{
 
     private ConcurrentHashMap<Long, ArrayList<Ticket>> trackingList;
+    private ConcurrentHashMap<String, ArrayList<Ticket>> nodeList;
+    
     private Timer timer;
     
     private static Tracker instance;
     
     private Tracker(int delay){
 	this.trackingList = new ConcurrentHashMap<Long, ArrayList<Ticket>>();
-
+	this.nodeList = new ConcurrentHashMap<String, ArrayList<Ticket>>();
+	
 	System.out.printf("[Tracker]: ready to handle periodic events%n");
         
 	this.timer = new Timer();
@@ -50,15 +61,31 @@ class Tracker{
 				    System.out.printf("[Tracker]: I was not able to receive any response from "+entry.getKey()+". Removing any reference to it.%n");
 
 				    // removing the association from socket registry
+				    SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
 				    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
 
 				    // remove any ticket associated with it
 				    trackingList.remove(entry.getKey());
-				}
-			
+				}	
 			    }
 			}
 		    }
+
+		    for(Entry<String, ArrayList<Ticket>> entry : nodeList.entrySet()){
+			for(Ticket t : entry.getValue()){
+			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
+				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");
+				
+				// removing the association from socket registry
+				SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
+				SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				
+				// remove any ticket associated with it
+				nodeList.remove(entry.getKey());
+			    }
+			}
+		    }
+		    
 		}
 
 	    },delay*100, delay*100);
@@ -66,6 +93,7 @@ class Tracker{
 	// periodically keep track of processes still alive
 	timer.scheduleAtFixedRate(new TimerTask(){
 		public void run() {
+		    // polling local processes...
 		    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
 			String PINGmessage = MessageForgery.forgePING(entry.getKey());
 
@@ -104,6 +132,19 @@ class Tracker{
 	this.trackingList.get(UUID).add(newTicket);
     }
 
+     
+    public void issueTicket(String nameUUID, int expirationThreshold, Long ticketUUID, String ticketType){
+	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType);
+
+	// create a field for this node
+	if(!nodeList.keySet().contains(nameUUID))
+	    this.nodeList.put(nameUUID, new ArrayList<Ticket>());
+	
+	// keep monitoring this ticket
+	this.nodeList.get(nameUUID).add(newTicket);
+    }
+
     private boolean isExpired(Ticket ticket){
 	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
 	Long currentTime = currentTimestamp.getTime();
@@ -117,5 +158,15 @@ class Tracker{
 	    }
 	}
     }
+
+     public void removeTicket(String nodeUUID, Long ticketUUID){
+	for(Ticket t : this.nodeList.get(nodeUUID)){
+	    if(t.UUID.equals(ticketUUID)){
+		this.nodeList.get(nodeUUID).remove(t);
+	    }
+	}
+    }
+
+    
     
 }

@@ -8,11 +8,20 @@ import java.net.Inet4Address;
 import java.net.Socket;
 import java.util.HashSet;
 
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Map.Entry;
+
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.Json;
+
 public class NamingRequestHandler implements Runnable{
 
     File nodesOnNetworkFile;
     SocketBox socketBox;
     HashSet<MessageType> messageToProcess;
+    Timer timer;
+
     
     public NamingRequestHandler(String ip, int port){
 	this.nodesOnNetworkFile = new File("processList.txt");
@@ -44,6 +53,26 @@ public class NamingRequestHandler implements Runnable{
 	}
 	
 	System.out.printf("[NamingRequestHandler]: Naming server READY%n");
+
+	// keep track of nodes still alive (only the name server should issue ping packets for naming purposes)...
+	this.timer = new Timer();
+	timer.schedule(new TimerTask(){
+		public void run(){
+		    for(Entry<String, SocketBox> entry : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+			String PINGmessage = MessageForgery.forgePING();
+
+			// parse the message to get the ticket identifier
+			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
+			// process considered alive if response arrives in at most 5 seconds
+			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
+
+			entry.getValue().sendOut(PINGmessage);
+			System.out.printf("invio%n");
+		    }
+		}
+	    }, 5000, 5000);
+	
+	
     }
 
     public void run(){

@@ -217,7 +217,14 @@ public enum MessageType implements TrafficRule{
 	     (s,m) -> {
 		 // remove the ticket, since the message has been received
 		 JsonObject Jmessage = Json.parse(m).asObject();
-		 Tracker.getInstance().removeTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), Jmessage.get(MessageField.TICKET.toString()).asLong());
+		 if(Jmessage.get(MessageField.RECIPIENTID.toString()) != null) // PING message originated by a process
+		     Tracker.getInstance().removeTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), Jmessage.get(MessageField.TICKET.toString()).asLong());
+		 else{ // PING message originated by name server
+		     // reply back with the same message
+		     SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()).sendOut(m);
+		     // remove the ticket
+		     Tracker.getInstance().removeTicket(Jmessage.get(MessageField.NAME.toString()).asString(), Jmessage.get(MessageField.TICKET.toString()).asLong());
+		 }
 	     },
 	     (o) -> {
 		 // reply back with the same message

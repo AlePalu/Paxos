@@ -101,13 +101,18 @@ class MessageForgery{
     public static String forgePING(Long recipientID){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PING.toString());
-	Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
+	if(recipientID != null)
+	    Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
 	
 	Random rng = new Random();
 	Long randomNumber = Math.abs(rng.nextLong());
 	Jmessage.add(MessageField.TICKET.toString(), randomNumber);
 
 	return Jmessage.toString();
+    }
+
+    public static String forgePING(){
+	return forgePING(null);
     }
 
 }
