@@ -221,7 +221,10 @@ public enum MessageType implements TrafficRule{
 		     Tracker.getInstance().removeTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), Jmessage.get(MessageField.TICKET.toString()).asLong());
 		 else{ // PING message originated by name server
 		     // reply back with the same message
-		     SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()).sendOut(m);
+		     String sender = Jmessage.get(MessageField.NAME.toString()).asString();
+		     Jmessage.remove(MessageField.NAME.toString()); // force the substitution of the field name with the name of who is replying back
+		     
+		     SocketRegistry.getInstance().getRemoteNodeRegistry().get(sender).sendOut(Jmessage.toString());
 		     // remove the ticket
 		     Tracker.getInstance().removeTicket(Jmessage.get(MessageField.NAME.toString()).asString(), Jmessage.get(MessageField.TICKET.toString()).asLong());
 		 }
@@ -233,6 +236,18 @@ public enum MessageType implements TrafficRule{
 
 		 process.sendMessage(message);
 	     }),
+	DISCOVERKILL("DISCOVERKILL",
+		     (s,m) -> {
+			 MessageType.forwardTo(s,m);
+		     },
+		     (o) -> {
+			 LocalNetworkProcess process = (LocalNetworkProcess) o[0];
+			 // simply nullify any pending discover by unlocking the process
+			 process.lock.lock();
+			 process.namingLock.signalAll();
+			 process.discoverMessageLock.signalAll();
+			 process.lock.unlock();
+		     }),
 	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
         PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),

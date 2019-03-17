@@ -67,11 +67,9 @@ public class NamingRequestHandler implements Runnable{
 			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
 
 			entry.getValue().sendOut(PINGmessage);
-			System.out.printf("invio%n");
-		    }
+		    }		    
 		}
-	    }, 5000, 5000);
-	
+	    }, 5000, 5000);	
 	
     }
 

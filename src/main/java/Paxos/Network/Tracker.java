@@ -71,6 +71,7 @@ class Tracker{
 			}
 		    }
 
+		    // START FROM HERE (implementare DISCOVEVRKILL per sbloccare processi bloccati su un incorretto naming, aggiornare il naming file, solo il naming deve eseguire questo (flag in main??))
 		    for(Entry<String, ArrayList<Ticket>> entry : nodeList.entrySet()){
 			for(Ticket t : entry.getValue()){
 			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
@@ -85,6 +86,7 @@ class Tracker{
 			    }
 			}
 		    }
+
 		    
 		}
 
