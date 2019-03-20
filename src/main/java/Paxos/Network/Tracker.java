@@ -2,6 +2,7 @@ package Paxos.Network;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -65,29 +66,11 @@ class Tracker{
 				    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
 
 				    // remove any ticket associated with it
-				    trackingList.remove(entry.getKey());
+				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
 				}	
 			    }
 			}
-		    }
-
-		    // START FROM HERE (implementare DISCOVEVRKILL per sbloccare processi bloccati su un incorretto naming, aggiornare il naming file, solo il naming deve eseguire questo (flag in main??))
-		    for(Entry<String, ArrayList<Ticket>> entry : nodeList.entrySet()){
-			for(Ticket t : entry.getValue()){
-			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
-				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");
-				
-				// removing the association from socket registry
-				SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
-				SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
-				
-				// remove any ticket associated with it
-				nodeList.remove(entry.getKey());
-			    }
-			}
-		    }
-
-		    
+		    }	    
 		}
 
 	    },delay*100, delay*100);
@@ -147,7 +130,15 @@ class Tracker{
 	this.nodeList.get(nameUUID).add(newTicket);
     }
 
-    private boolean isExpired(Ticket ticket){
+    public ConcurrentHashMap<String, ArrayList<Ticket>> getNamingTickets(){
+	return this.nodeList;
+    }
+
+    public ConcurrentHashMap<Long, ArrayList<Ticket>> getTrackingList(){
+	return this.trackingList;
+    }
+    
+    public boolean isExpired(Ticket ticket){
 	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
 	Long currentTime = currentTimestamp.getTime();
         return (currentTime - ticket.timestamp) > ticket.expirationThreshold; 

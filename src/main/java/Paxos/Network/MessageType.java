@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public enum MessageType implements TrafficRule{ 
 	SUBSCRIBE("SUBSCRIBE",
@@ -69,7 +70,7 @@ public enum MessageType implements TrafficRule{
 			 else // to remote node
 			     SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()).sendOut(DISCOVERREPLYmessage);
 		     }catch(Exception e){
-
+			 e.printStackTrace();
 		     }
 		 }),
 	DISCOVERREQUEST("DISCOVERREQUEST",
@@ -226,7 +227,7 @@ public enum MessageType implements TrafficRule{
 		     
 		     SocketRegistry.getInstance().getRemoteNodeRegistry().get(sender).sendOut(Jmessage.toString());
 		     // remove the ticket
-		     Tracker.getInstance().removeTicket(Jmessage.get(MessageField.NAME.toString()).asString(), Jmessage.get(MessageField.TICKET.toString()).asLong());
+		     Tracker.getInstance().removeTicket(sender, Jmessage.get(MessageField.TICKET.toString()).asLong());
 		 }
 	     },
 	     (o) -> {
@@ -275,7 +276,8 @@ public enum MessageType implements TrafficRule{
 	private static void forwardTo(SocketBox socket, String message){
 	    JsonObject Jmessage = Json.parse(message).asObject();
 	    if(Jmessage.get(MessageField.FORWARDTYPE.toString()).asString().equals(ForwardType.BROADCAST.toString())){
-		for(SocketBox socketBroadcast : SocketRegistry.getInstance().getRegistry().values()){
+		Collection<SocketBox> sockets = SocketRegistry.getInstance().getRegistry().values();
+		for(SocketBox socketBroadcast : sockets){
 		    socketBroadcast.sendOut(message);
 		}
 	    }else{ // unicast transmission

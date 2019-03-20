@@ -13,9 +13,7 @@ class TrafficHandler implements Runnable{
 		    if(socket.getInputStream().ready()){ // there are data ready to be readden
 			// get the message from socket
 			message = socket.getInputStream().readLine();
-
-			//System.out.printf(message+"%n");
-			
+	
 			// apply traffic rule
 			for(MessageType msg : MessageType.values()){
 			    if(msg.match(message)){

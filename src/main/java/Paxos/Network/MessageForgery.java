@@ -115,4 +115,13 @@ class MessageForgery{
 	return forgePING(null);
     }
 
+    public static String forgeDISCOVERKILL(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.DISCOVERKILL.toString());
+	
+	// this message is sent in broadcast
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+	return Jmessage.toString();
+    }
+
 }

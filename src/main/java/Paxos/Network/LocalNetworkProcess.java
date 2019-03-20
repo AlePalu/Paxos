@@ -59,6 +59,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.messageToProcess.add(MessageType.DISCOVERREPLY);
 		this.messageToProcess.add(MessageType.NAMINGREPLY);
 		this.messageToProcess.add(MessageType.PING);
+		this.messageToProcess.add(MessageType.DISCOVERKILL);
 		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();

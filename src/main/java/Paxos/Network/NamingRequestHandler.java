@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.net.Inet4Address;
 import java.net.Socket;
+import java.nio.Buffer;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import java.util.Timer;
@@ -68,8 +70,30 @@ public class NamingRequestHandler implements Runnable{
 
 			entry.getValue().sendOut(PINGmessage);
 		    }		    
+		
+		    for(Entry<String, ArrayList<Ticket>> entry : Tracker.getInstance().getNamingTickets().entrySet()){
+			for(Ticket t : entry.getValue()){
+			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
+				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");	       
+				
+				// removing the association from socket registry
+				SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
+				SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				
+				// remove the name from list of known hosts
+				removeName(entry.getKey());
+				
+				// remove any ticket associated with it
+				Tracker.getInstance().getNamingTickets().remove(entry.getKey());
+				
+				// send a DISCOVERKILL in broadcast
+				String DISCOVERKILLmessage = MessageForgery.forgeDISCOVERKILL();
+				getSocketBox().sendOut(DISCOVERKILLmessage);
+			    }
+			}
+		    }
 		}
-	    }, 5000, 5000);	
+	    }, 500, 500);	
 	
     }
 
@@ -81,7 +105,7 @@ public class NamingRequestHandler implements Runnable{
 		    message = this.socketBox.getInputStream().readLine();
 
 		    // handle messages...
-		    for(MessageType msg : this.messageToProcess){
+		    for(MessageType msg : this.messageToProcess){	
 			if(msg.match(message))
 			    msg.applyLogic(this, message);
 		    }
@@ -118,6 +142,30 @@ public class NamingRequestHandler implements Runnable{
 	    fileWriter.write(in);
 	    fileWriter.flush();
         }catch(Exception e){
+	    return;
+	}
+    }
+
+    public void removeName(String name){
+	ArrayList<String> tmp = new ArrayList<String>();
+	
+	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
+	    String ip = reader.readLine();
+	    while(ip != null){
+		if(!ip.equals(name))
+		    tmp.add(ip);
+
+		ip = reader.readLine();
+	    }
+	}catch(Exception e){
+	    return;
+	}
+	try(FileWriter fileWriter = new FileWriter(this.nodesOnNetworkFile, false)){
+	    for(String s : tmp){
+		fileWriter.write(s+"\n");
+		fileWriter.flush();
+	    }
+	}catch(Exception e){
 	    return;
 	}
     }

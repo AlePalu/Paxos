@@ -56,9 +56,8 @@ public class SocketBox{
     public void close(){
 	try{
 	    this.socket.close();
-	    this.socketInputStream.close();
-	    this.socketOutputStream.close();
 	}catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
     }
