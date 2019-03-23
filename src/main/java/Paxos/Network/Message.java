@@ -5,7 +5,8 @@ import com.eclipsesource.json.JsonObject;
 
 enum ForwardType{
     UNICAST("UNICAST"),
-    BROADCAST("BROADCAST");
+    BROADCAST("BROADCAST"),
+    LOCALBROADCAST("LOCALBROADCAST");
 
     private String type;
 

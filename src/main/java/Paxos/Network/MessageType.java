@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public enum MessageType implements TrafficRule{ 
 	SUBSCRIBE("SUBSCRIBE",
@@ -275,10 +276,26 @@ public enum MessageType implements TrafficRule{
 
 	private static void forwardTo(SocketBox socket, String message){
 	    JsonObject Jmessage = Json.parse(message).asObject();
-	    if(Jmessage.get(MessageField.FORWARDTYPE.toString()).asString().equals(ForwardType.BROADCAST.toString())){
-		Collection<SocketBox> sockets = SocketRegistry.getInstance().getRegistry().values();
-		for(SocketBox socketBroadcast : sockets){
-		    socketBroadcast.sendOut(message);
+	    // broadcasting messages to check
+	    HashSet<String> forwardType = new HashSet<String>();
+	    forwardType.add(ForwardType.BROADCAST.toString());
+	    forwardType.add(ForwardType.LOCALBROADCAST.toString());
+
+	    String actualForwardType = Jmessage.get(MessageField.FORWARDTYPE.toString()).asString();
+	    
+	    if(forwardType.contains(actualForwardType)){
+		ArrayList<SocketBox> sockets = new ArrayList<SocketBox>(SocketRegistry.getInstance().getRegistry().values());
+
+		if(actualForwardType.equals(ForwardType.BROADCAST.toString())){ // truly broadcast trasmission
+		    // add remote nodes
+		    sockets.addAll(SocketRegistry.getInstance().getRemoteNodeRegistry().values());
+
+		    // avoid flooding the network with broadcast messages, make this message a LOCALBROADCAST one
+		    Jmessage.remove(MessageField.FORWARDTYPE.toString());
+		    Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.LOCALBROADCAST.toString());
+		}
+		for(SocketBox socketBroadcast : sockets){ 
+		    socketBroadcast.sendOut(Jmessage.toString());
 		}
 	    }else{ // unicast transmission
 		Long UUIDreceiver = Jmessage.get(MessageField.RECIPIENTID.toString()).asLong();
