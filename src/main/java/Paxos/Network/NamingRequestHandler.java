@@ -6,13 +6,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.net.Inet4Address;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.Json;
@@ -71,7 +71,7 @@ public class NamingRequestHandler implements Runnable{
 			entry.getValue().sendOut(PINGmessage);
 		    }		    
 		
-		    for(Entry<String, ArrayList<Ticket>> entry : Tracker.getInstance().getNamingTickets().entrySet()){
+		    for(Entry<String, CopyOnWriteArrayList<Ticket>> entry : Tracker.getInstance().getNamingTickets().entrySet()){
 			for(Ticket t : entry.getValue()){
 			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
 				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");	       

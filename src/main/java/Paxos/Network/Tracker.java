@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
@@ -37,16 +39,16 @@ class Ticket{
 
 class Tracker{
 
-    private ConcurrentHashMap<Long, ArrayList<Ticket>> trackingList;
-    private ConcurrentHashMap<String, ArrayList<Ticket>> nodeList;
+    private ConcurrentHashMap<Long, CopyOnWriteArrayList<Ticket>> trackingList;
+    private ConcurrentHashMap<String, CopyOnWriteArrayList<Ticket>> nodeList;
     
     private Timer timer;
     
     private static Tracker instance;
     
     private Tracker(int delay){
-	this.trackingList = new ConcurrentHashMap<Long, ArrayList<Ticket>>();
-	this.nodeList = new ConcurrentHashMap<String, ArrayList<Ticket>>();
+	this.trackingList = new ConcurrentHashMap<Long, CopyOnWriteArrayList<Ticket>>();
+	this.nodeList = new ConcurrentHashMap<String, CopyOnWriteArrayList<Ticket>>();
 	
 	System.out.printf("[Tracker]: ready to handle periodic events%n");
         
@@ -55,7 +57,7 @@ class Tracker{
 	// check if there is some ticket expired
 	timer.scheduleAtFixedRate(new TimerTask(){
 		public void run() {
-		    for(Entry<Long, ArrayList<Ticket>> entry : trackingList.entrySet()){
+		    for(Entry<Long, CopyOnWriteArrayList<Ticket>> entry : trackingList.entrySet()){
 			for(Ticket t : entry.getValue()){
 			    if(Tracker.getInstance().isExpired(t)){
 				if(t.ticketType.equals(MessageType.PING.toString())){
@@ -111,10 +113,14 @@ class Tracker{
 
 	// create a field for this UUID
 	if(!trackingList.keySet().contains(UUID))
-	    this.trackingList.put(UUID, new ArrayList<Ticket>());
+	    this.trackingList.put(UUID, new CopyOnWriteArrayList<Ticket>());
 	
 	// keep monitoring this ticket
-	this.trackingList.get(UUID).add(newTicket);
+	try{
+	    this.trackingList.get(UUID).add(newTicket);
+	}catch(Exception e){
+	    e.printStackTrace();
+	}
     }
 
      
@@ -124,17 +130,21 @@ class Tracker{
 
 	// create a field for this node
 	if(!nodeList.keySet().contains(nameUUID))
-	    this.nodeList.put(nameUUID, new ArrayList<Ticket>());
+	    this.nodeList.put(nameUUID, new CopyOnWriteArrayList<Ticket>());
 	
 	// keep monitoring this ticket
-	this.nodeList.get(nameUUID).add(newTicket);
+	try{
+	    this.nodeList.get(nameUUID).add(newTicket);
+	}catch(Exception e){
+	    e.printStackTrace();
+	}
     }
 
-    public ConcurrentHashMap<String, ArrayList<Ticket>> getNamingTickets(){
+    public ConcurrentHashMap<String, CopyOnWriteArrayList<Ticket>> getNamingTickets(){
 	return this.nodeList;
     }
 
-    public ConcurrentHashMap<Long, ArrayList<Ticket>> getTrackingList(){
+    public ConcurrentHashMap<Long, CopyOnWriteArrayList<Ticket>> getTrackingList(){
 	return this.trackingList;
     }
     
