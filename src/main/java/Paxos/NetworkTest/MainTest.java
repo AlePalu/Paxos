@@ -20,10 +20,19 @@ class MainTest {
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
-	    while(true){
-		Thread.sleep(50);
-		myProcess.updateConnectedProcessesList();
+		NetworkInterface myProcess2 = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, pid);
+		Thread netThread2 = new Thread(myProcess2);
+		netThread2.start();
 
+
+		while(true){
+		Thread.sleep(2000);
+			System.out.println("Start");
+
+			myProcess.updateConnectedProcessesList();
+		System.out.println(myProcess.lookupConnectedProcesses());
+
+		/*
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
@@ -40,11 +49,12 @@ class MainTest {
 		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
 		    
 		    myProcess.sendMessage(msg.getJSON());
-		}
+		}*/
 	    }
 	}catch(Exception w){
 	    w.printStackTrace();
 	}
+
       }
 }
 

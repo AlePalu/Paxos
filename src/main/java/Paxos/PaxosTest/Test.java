@@ -22,11 +22,12 @@ public class Test {
         System.out.println(a1.getid()+" think java sucks");
         System.out.println(a3.getid()+" think java is wonderful");
 
-        s.nextLine();
+        Thread.sleep(100);
+        System.out.println("via");
 
         a1.propose("java sucks");
-        //Thread.sleep(1000);
-        a3.propose("java is wonderful");
+       // Thread.sleep(1000);
+        // a3.propose("java is wonderful");
 
 
     }

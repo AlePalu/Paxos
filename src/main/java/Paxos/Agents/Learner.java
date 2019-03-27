@@ -29,6 +29,7 @@ public class Learner {
     void processDecisionRequest(Message m){
         currentNumOfVoter++;
         if (currentNumOfVoter > data.getNumOfProces()/2 && data.getCurrentValue() == null) {
+            System.out.println("io sono" + data.getId() + " e imparo "+ m.getValue());
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
         }
