@@ -34,10 +34,13 @@ class MainTest {
 
 		/*
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
+
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
 
-		if(myProcess.isThereAnyMessage()){
+		howManyMessages = myProcess.isThereAnyMessage();
+		
+		while(howManyMessages!=0){
 		    String msgs = myProcess.receiveMessage();
 		    Message receivedMessage = new Message(msgs);
 
@@ -50,6 +53,7 @@ class MainTest {
 		    
 		    myProcess.sendMessage(msg.getJSON());
 		}*/
+
 	    }
 	}catch(Exception w){
 	    w.printStackTrace();

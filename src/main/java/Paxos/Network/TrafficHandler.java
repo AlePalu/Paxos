@@ -28,7 +28,7 @@ class TrafficHandler implements Runnable{
 			}
 		    }
 		}
-		Thread.sleep(10); // avoid burning the CPU
+		Thread.sleep(50); // avoid burning the CPU
 	    }catch(Exception e){
 	        continue;
 	    }

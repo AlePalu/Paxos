@@ -76,7 +76,7 @@ class Tracker{
 		    }	    
 		}
 
-	    },delay*100, delay*100);
+	    }, delay*100, delay*100);
 
 	// periodically keep track of processes still alive
 	timer.scheduleAtFixedRate(new TimerTask(){
@@ -94,7 +94,7 @@ class Tracker{
 		    }
 		}
 		
-	    }, delay*2000, delay*2000);
+	    }, delay*200, delay*200);
 	
     }
 

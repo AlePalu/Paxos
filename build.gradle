@@ -32,7 +32,6 @@ dependencies {
 task NetworkJar(type: Jar){
      from(sourceSets.main.output){
 	include 'Paxos/Network/*.class'
-	include 'Paxos/Agent/*.class'
      }
      manifest{
 	attributes('Implementation-Title': 'Network Stack Jar',
@@ -46,8 +45,8 @@ tasks.jar.dependsOn(NetworkJar)
 
 task NetworkJarTest(type: Jar){
      from(sourceSets.main.output){
-	include 'Paxos/**/*.class'
-	
+	include 'Paxos/Network/*.class'
+	include 'Paxos/NetworkTest/*.class'
      }
      manifest{
 	attributes('Main-Class':'Paxos.NetworkTest.MainTest')

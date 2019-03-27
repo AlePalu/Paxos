@@ -52,11 +52,11 @@ public class AgentHandler implements Runnable {
            catch(InterruptedException e){
                e.printStackTrace();
            }
-           if (network.isThereAnyMessage()) {
+           /*if (network.isThereAnyMessage()) {
                s = network.receiveMessage();
                m = new Message(s);
                respons(m);
-            }
+	       }*/
         }
     }
 

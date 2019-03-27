@@ -81,14 +81,15 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
  
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
-		 //   System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
+
+		    System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 		
 		if(this.socketBox.getInputStream().ready()){ // IN
 		    // take the message
 		    message = this.socketBox.getInputStream().readLine();
 
-//		    System.out.printf("[IN ]: "+message+"\n");
+		    System.out.printf("[IN ]: "+message+"\n");
 
 		    for(MessageType msgType : this.messageToProcess){
 			if(msgType.match(message)){
@@ -101,7 +102,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    match = false;
 		}
 
-		Thread.sleep(10); // avoid burning CPU
+		//System.out.printf(this.inboundQueue.size()+"%n");
+		Thread.sleep(50); // avoid burning CPU
 	    }
 	    catch (Exception e) {
 		System.out.println("Error " + e.getMessage());
@@ -119,8 +121,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	return this.inboundQueue.poll();
     }
 
-    public Boolean isThereAnyMessage(){
-	return !this.inboundQueue.isEmpty();
+    public int isThereAnyMessage(){
+	return this.inboundQueue.size();
     }
 
     public ArrayList<Long> lookupConnectedProcesses(){
