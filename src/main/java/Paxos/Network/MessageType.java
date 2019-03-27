@@ -21,16 +21,22 @@ public enum MessageType implements TrafficRule{
 		      if (!SocketRegistry.getInstance().getRegistry().values().contains(s)){
 			  JsonObject Jmessage = Json.parse(m).asObject();
 			  try {
-
-			      if(Jmessage.get(MessageField.NAME.toString()).asString().equals(Inet4Address.getLocalHost().getHostAddress())){ // local message
 				  Long UUID = Jmessage.get(MessageField.SENDERID.toString()).asLong();
-				  // bind the socketBox to the UUID of the sender
-				  SocketRegistry.getInstance().addElement(UUID, s);
-				  SocketRegistry.getInstance().getPendingSockets().remove(s);
+			      if(Jmessage.get(MessageField.NAME.toString()).asString().equals(Inet4Address.getLocalHost().getHostAddress()) &&
+						  !Jmessage.get(MessageField.FORWARDTYPE.toString()).asString().equals(ForwardType.LOCALBROADCAST.toString())) {
+					  // local message
 
-				  // forward to remote node
-				  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString)
-			      }
+					  // bind the socketBox to the UUID of the sender
+					  SocketRegistry.getInstance().addElement(UUID, s);
+					  SocketRegistry.getInstance().getPendingSockets().remove(s);
+
+					  // forward to remote node
+					  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+				  }
+				  else{
+				  	SocketRegistry.getInstance().getRegistry().put(UUID,SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()));
+				  }
+
 			  }
 			  catch (Exception e) {
 			      System.out.println("Error " + e.getMessage());
