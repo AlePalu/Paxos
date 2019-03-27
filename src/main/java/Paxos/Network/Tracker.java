@@ -82,15 +82,15 @@ class Tracker{
 	timer.scheduleAtFixedRate(new TimerTask(){
 		public void run() {
 		    // polling local processes...
-		    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
-			String PINGmessage = MessageForgery.forgePING(entry.getKey());
+		    for(Long entry : SocketRegistry.getInstance().getLocalUUID()){
+			String PINGmessage = MessageForgery.forgePING(entry);
 
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
 			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
+			Tracker.getInstance().issueTicket(entry, 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
 			// send the message
-			entry.getValue().sendOut(PINGmessage);
+			SocketRegistry.getInstance().getRegistry().get(entry).sendOut(PINGmessage);
 		    }
 		}
 		

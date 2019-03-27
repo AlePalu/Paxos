@@ -24,8 +24,6 @@ class MainTest {
 		Thread.sleep(500);
 		myProcess.updateConnectedProcessesList();
 
-		System.out.printf(myProcess.lookupConnectedProcesses().toString()+"%n");
-		
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
@@ -33,6 +31,9 @@ class MainTest {
 		if(myProcess.isThereAnyMessage()){
 		    String msgs = myProcess.receiveMessage();
 		    Message receivedMessage = new Message(msgs);
+
+		    System.out.printf("[MessageReceived]: "+msgs+"%n");
+		    
 		    // example of reply
 		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST);
 		    myProcess.sendMessage(msg.getJSON());

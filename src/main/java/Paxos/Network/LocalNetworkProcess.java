@@ -81,14 +81,14 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
  
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
-		    System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
+		    //System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 		
 		if(this.socketBox.getInputStream().ready()){ // IN
 		    // take the message
 		    message = this.socketBox.getInputStream().readLine();
 
-		    System.out.printf("[IN ]: "+message+"\n");
+		    //System.out.printf("[IN ]: "+message+"\n");
 
 		    for(MessageType msgType : this.messageToProcess){
 			if(msgType.match(message)){
