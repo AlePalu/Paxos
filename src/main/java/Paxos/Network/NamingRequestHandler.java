@@ -30,6 +30,7 @@ public class NamingRequestHandler implements Runnable{
 	
 	try{
 	    // create file if not exists
+	    this.nodesOnNetworkFile.delete();
 	    this.nodesOnNetworkFile.createNewFile();
 	    
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure

@@ -16,7 +16,7 @@ class MainTest {
 	final long pid = runtime.getPid();
 
 	try{
-	    NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, pid);
+	    NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, 20);
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
@@ -25,6 +25,8 @@ class MainTest {
 		netThread2.start();
 
 
+		int howManyMessages;
+		
 		while(true){
 		Thread.sleep(2000);
 			System.out.println("Start");
@@ -32,7 +34,7 @@ class MainTest {
 			myProcess.updateConnectedProcessesList();
 		System.out.println(myProcess.lookupConnectedProcesses());
 
-		/*
+		
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
 
 		msg.setAsBroadcast();
@@ -52,7 +54,7 @@ class MainTest {
 		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
 		    
 		    myProcess.sendMessage(msg.getJSON());
-		}*/
+		}
 
 	    }
 	}catch(Exception w){
