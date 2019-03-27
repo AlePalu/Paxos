@@ -102,7 +102,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    match = false;
 		}
 
-		//System.out.printf(this.inboundQueue.size()+"%n");
 		Thread.sleep(50); // avoid burning CPU
 	    }
 	    catch (Exception e) {
@@ -121,8 +120,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	return this.inboundQueue.poll();
     }
 
-    public int isThereAnyMessage(){
-	return this.inboundQueue.size();
+    public boolean isThereAnyMessage(){
+	return !this.inboundQueue.isEmpty();
     }
 
     public ArrayList<Long> lookupConnectedProcesses(){

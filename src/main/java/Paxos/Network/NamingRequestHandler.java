@@ -94,7 +94,7 @@ public class NamingRequestHandler implements Runnable{
 			}
 		    }
 		}
-	    }, 500, 500);	
+	    }, 4000, 4000);	
 	
     }
 

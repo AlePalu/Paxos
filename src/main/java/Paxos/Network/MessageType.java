@@ -12,20 +12,30 @@ import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 
 public enum MessageType implements TrafficRule{ 
 	SUBSCRIBE("SUBSCRIBE",
 		  (s, m)->{
 		      // SUBSCRIBE messages are processed only once
-		      if (!SocketRegistry.getInstance().getRegistry().values().contains(s)) {
-			  // get UUID of the sender
+		      if (!SocketRegistry.getInstance().getRegistry().values().contains(s)){
 			  JsonObject Jmessage = Json.parse(m).asObject();
-			  Long UUID = Jmessage.get(MessageField.SENDERID.toString()).asLong();
-			  // bind the socketBox to the UUID of the sender
-			  SocketRegistry.getInstance().addElement(UUID, s);
-			  SocketRegistry.getInstance().getPendingSockets().remove(s);
+			  try {
+
+			      if(Jmessage.get(MessageField.NAME.toString()).asString().equals(Inet4Address.getLocalHost().getHostAddress())){ // local message
+				  Long UUID = Jmessage.get(MessageField.SENDERID.toString()).asLong();
+				  // bind the socketBox to the UUID of the sender
+				  SocketRegistry.getInstance().addElement(UUID, s);
+				  SocketRegistry.getInstance().getPendingSockets().remove(s);
+
+				  // forward to remote node
+				  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString)
+			      }
+			  }
+			  catch (Exception e) {
+			      System.out.println("Error " + e.getMessage());
+			      e.printStackTrace();
+			  }
 		      }
 		  }),
 	// messages used to keep track of processes currently active on network
@@ -316,12 +326,15 @@ public enum MessageType implements TrafficRule{
 		    Jmessage.remove(MessageField.FORWARDTYPE.toString());
 		    Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.LOCALBROADCAST.toString());
 		}
-		for(SocketBox socketBroadcast : sockets){ 
+		for(SocketBox socketBroadcast : sockets){
 		    socketBroadcast.sendOut(Jmessage.toString());
 		}
 	    }else{ // unicast transmission
 		Long UUIDreceiver = Jmessage.get(MessageField.RECIPIENTID.toString()).asLong();
 		// get the socket binded to this UUID
+		
+		System.out.printf(SocketRegistry.getInstance().getRegistry().toString()+"%n");
+		
 		SocketBox receiverSocket = SocketRegistry.getInstance().getRegistry().get(UUIDreceiver);
 		receiverSocket.sendOut(message);
 	    }

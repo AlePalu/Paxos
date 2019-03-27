@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public interface NetworkInterface extends Runnable{
     public void sendMessage(String msg);
     public String receiveMessage();
-    public int isThereAnyMessage();
+    public boolean isThereAnyMessage();
     public ArrayList<Long> lookupConnectedProcesses();
     public void updateConnectedProcessesList() throws InterruptedException;
 

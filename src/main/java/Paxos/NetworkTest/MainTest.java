@@ -27,22 +27,19 @@ class MainTest {
 
 		int howManyMessages;
 		
-		while(true){
-		Thread.sleep(2000);
-			System.out.println("Start");
-
-			myProcess.updateConnectedProcessesList();
-		System.out.println(myProcess.lookupConnectedProcesses());
-
-		
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
 
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());
-
-		howManyMessages = myProcess.isThereAnyMessage();
 		
-		while(howManyMessages!=0){
+		while(true){
+		Thread.sleep(2000);
+		System.out.println("Start");
+		/*
+		myProcess.updateConnectedProcessesList();
+		System.out.println(myProcess.lookupConnectedProcesses());
+		
+		if(myProcess.isThereAnyMessage()){
 		    String msgs = myProcess.receiveMessage();
 		    Message receivedMessage = new Message(msgs);
 
@@ -54,7 +51,7 @@ class MainTest {
 		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
 		    
 		    myProcess.sendMessage(msg.getJSON());
-		}
+		    }*/
 
 	    }
 	}catch(Exception w){
