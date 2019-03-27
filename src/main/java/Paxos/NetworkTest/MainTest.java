@@ -34,7 +34,7 @@ class MainTest {
 		    String msgs = myProcess.receiveMessage();
 		    Message receivedMessage = new Message(msgs);
 		    // example of reply
-		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.PREPAREREQUEST);
+		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST);
 		    myProcess.sendMessage(msg.getJSON());
 		}
 	    }

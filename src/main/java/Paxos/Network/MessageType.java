@@ -32,6 +32,27 @@ public enum MessageType implements TrafficRule{
 	DISCOVERREPLY("DISCOVERREPLY",
 		      (s, m) -> {
 			  // local DISCOVERREPLY messages are sent directly to the process which originated the request, only remote ones are processed here
+
+			  // bind the UUID of remote processes to the socket of the remote machine where are hosted
+			  JsonObject Jmessage = Json.parse(m).asObject();
+			  SocketBox remoteSocketBox = SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString());
+
+			  ArrayList<Long> activeProcesses = new ArrayList<Long>();
+			  for(JsonValue UUID : Jmessage.get(MessageField.CPLIST.toString()).asArray()){
+			      SocketRegistry.getInstance().getRegistry().put(UUID.asLong(), remoteSocketBox);
+			      activeProcesses.add(UUID.asLong());
+			  }
+
+			  // remove UUID of processes binded to this remote machine which are not contained in the DISCOVERREPLY (death processes)
+			  for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
+			      if(entry.getValue().equals(remoteSocketBox) && !activeProcesses.contains(entry.getKey())){ // remove this binding
+				  SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+			      }
+			  }
+
+			  System.out.printf(SocketRegistry.getInstance().getRegistry().toString()+"%n");
+
+			  // forward the message to the process
 			  MessageType.forwardTo(s,m);
 		      },
 		      (o) -> {
@@ -55,8 +76,8 @@ public enum MessageType implements TrafficRule{
 	DISCOVER("DISCOVER",
 		 (s, m)->{
 		     JsonArray connectedProcesses = new JsonArray();
-		     for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
-			 connectedProcesses.add(entry.getKey()); // building array with known UUID
+		     for(Long entry : SocketRegistry.getInstance().getLocalUUID()){
+			 connectedProcesses.add(entry); // building array with known UUID
 		     }
 
 		     // parse the message to get the ID of the sender
@@ -78,8 +99,8 @@ public enum MessageType implements TrafficRule{
 			(s, m)->{
 			    // reply with the list of local processes
 			    JsonArray connectedProcesses = new JsonArray();
-			    for(Entry<Long, SocketBox> entry : SocketRegistry.getInstance().getRegistry().entrySet()){
-				connectedProcesses.add(entry.getKey()); // building array with known UUID
+			    for(Long entry : SocketRegistry.getInstance().getLocalUUID()){
+				connectedProcesses.add(entry); // building array with known UUID
 			    }
 	
 			    String DISCOVERREPLYmessage = MessageForgery.forgeDISCOVERREPLY(connectedProcesses);

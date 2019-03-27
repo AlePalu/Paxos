@@ -66,6 +66,7 @@ class Tracker{
 				    // removing the association from socket registry
 				    SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
 				    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+				    SocketRegistry.getInstance().getLocalUUID().remove(entry.getKey());
 
 				    // remove any ticket associated with it
 				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
