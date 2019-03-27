@@ -49,9 +49,6 @@ public enum MessageType implements TrafficRule{
 				  SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
 			      }
 			  }
-
-			  System.out.printf(SocketRegistry.getInstance().getRegistry().toString()+"%n");
-
 			  // forward the message to the process
 			  MessageType.forwardTo(s,m);
 		      },
@@ -305,7 +302,11 @@ public enum MessageType implements TrafficRule{
 	    String actualForwardType = Jmessage.get(MessageField.FORWARDTYPE.toString()).asString();
 	    
 	    if(forwardType.contains(actualForwardType)){
-		ArrayList<SocketBox> sockets = new ArrayList<SocketBox>(SocketRegistry.getInstance().getRegistry().values());
+		ArrayList<SocketBox> sockets = new ArrayList<SocketBox>();
+
+		for(Long UUID : SocketRegistry.getInstance().getLocalUUID()){
+		    sockets.add(SocketRegistry.getInstance().getRegistry().get(UUID));
+		}
 
 		if(actualForwardType.equals(ForwardType.BROADCAST.toString())){ // truly broadcast trasmission
 		    // add remote nodes

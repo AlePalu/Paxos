@@ -116,7 +116,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     }
 
     public String receiveMessage(){
-	return this.inboundQueue.remove();
+	return this.inboundQueue.poll();
     }
 
     public Boolean isThereAnyMessage(){

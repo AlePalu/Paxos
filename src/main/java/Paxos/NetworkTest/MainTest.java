@@ -21,7 +21,7 @@ class MainTest {
 	    netThread.start();
 
 	    while(true){
-		Thread.sleep(500);
+		Thread.sleep(50);
 		myProcess.updateConnectedProcessesList();
 
 		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
@@ -36,6 +36,9 @@ class MainTest {
 		    
 		    // example of reply
 		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST);
+
+		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
+		    
 		    myProcess.sendMessage(msg.getJSON());
 		}
 	    }
