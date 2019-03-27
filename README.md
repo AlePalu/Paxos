@@ -1,6 +1,6 @@
 # Paxos
 
-## project setup for development
+## project setup
 
 just execute the following
 
@@ -10,6 +10,12 @@ gradle eclipse
 ```
 
 ## run Paxos
+
+First build the project
+
+```
+gradle NetworkJar
+```
 
 To start the network infrastructure:
 
@@ -38,24 +44,28 @@ The latter works under the assumption that all processes on network can be uniqu
 `NetworkInterface` is implemented by `LocalNetworkProcess`. All a process has to do in order to interact with the network is the following:
 
 ```
-NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, processUUID);
+String myIP = InetAddress.getLocalHost().getHostAddress();
+NetworkInterface myProcess = new LocalNetworkProcess(myIP, 40000, processUUID);
 Thread netThread = new Thread(myProcess);
 netThread.start();
 ```
 
 After this, all primitives offered by NetworkInterface can be accessed. LocalNetworkProcess will take care of the rest, giving to the consumer a nice abstraction of the network.
-When instantiated LocalNetworkProcess simply starts a thread handling both the inbound and outbound queues for the process, besides be responsable for the DISCOVER mechanism. All stuffs related to naming, communication facilities, failure detection are transparent to the consumer.
+
+`LocalNetworkProcess` simply starts a thread handling both the inbound and outbound queues for the process, besides be responsable for the DISCOVER mechanism. All stuffs related to naming, communication facilities, failure detection are transparent to the consumer and are a responsibility of the network infrastructure.
 
 ### The network infrastructure
 
-The network infrastructure is based on tree main classes: 
-* `ConnectionHandler`, listening on port 40000 and responsable to handle new connections coming from both internal and external process,
-* `TrafficHandler`, which effectively routes the traffic between processes and apply some internal processing depending on the type of the message,
+The network infrastructure is based on three main classes: 
+* `ConnectionHandler`, listening on port 40000 and responsable to open new connections coming from both internal and external process,
+* `TrafficHandler`, which effectively routes the traffic between processes and applies some processing required by the network stack to execute its internal functions,
 * `SocketRegistry`, which keeps track of all (process identifier - socket) associations as well as the name server socket and a list of remote node references.
+
+Upon these three classes, which are enought to guarantee a basic network infrastructure able to send and receive messages, the network offer some more functionalities:
 
 #### Name Service
 
-In order to work properly in LAN, a naming service must be present on the network. As known, when a new physical node connects for the first time to the network, it has no idea about the presence of other running machines. This translates to the practical impossibility to perform any remote communication. From here the need of a service able to keep track of the currently active nodes on network. The class `NamingRequestHandler` is responsable to handle all naming requests. When a `NAMINGREQUEST` message is processed by the name server, it replies back with the list of known running physical nodes. Each phyisical node is identified by its IP address, which obviously is unique in a LAN setting. New nodes subscribes to the naming service by means of a `NAMINGUPDATE` message.
+In order to properly work on LAN, a naming service must be present on the network. As known, when a new physical node connects for the first time to the network, it has no idea about the presence of other running machines. This translates to the practical impossibility to perform any remote communication. From here the need of a service able to keep track of the currently active nodes on network. The class `NamingRequestHandler` is responsable to handle all naming requests. When a `NAMINGREQUEST` message is processed by the name server, it replies back with the list of known running physical nodes. Each phyisical node is identified by its IP address, which obviously is unique in a LAN setting. New nodes subscribes to the naming service by means of a `NAMINGUPDATE` message.
 
 The nice fact is that the name server is totally equivalent to any other LocalNetworkProcess instance, than there is no need inside the network stack to special structures for it. When the name server is launched, it is simply attached to the local network infrastructure which starts forwarding the traffic to it. If the name service resides on a remote node, the network infrastructure forwards the traffic to the physical machine where it is running. As a result, there is no difference between a network infrasturcture which hosts the name server and one that not, the only difference is that the node hosting the name server has, as a consequence, a running thread more.
 
@@ -65,8 +75,8 @@ As stated before, the network stack allows every process to be informed about th
 
 When a process connects, the first thing it does is sending a `SUBSCRIBE` message to the local network infrastucture to notify its presence. From now on the network knows about it and keeps track of its identifier (send throught the SUBSCRIBE).
 
-When a process wants to be informed about the precence of currently active processes it sends a `DISCOVERREQUEST` message to the local infrastructure. The call is synchronous, in the sense that the caller is blocked until all physical node have replied, this guarantees that when the control is given back to the caller, it has the most updated state of the network. In response to a `DISCOVERREQUEST`, the local infrastructure immediately replies with the list of local processes and then starts sending `DISCOVER` messages to all known remote nodes, in order to be informed also on processes running on remote machines. 
-When a network infrastrucure receives a `DISCOVER` message it responds directly with a `DISCOVERREPLY` containing the list of its local active processes to the sender of the DISCOVER. In turn, the network infrastructure which originated the DISCOVER on reception of the DISCOVERREPLY directly forwards it to the process which started the request. At the end, when all the `DISCOVERREPLY` have been received, such process has the list of all known processes running on the network.
+When a process wants to be informed about the precence of currently active processes on network it sends a `DISCOVERREQUEST` message to the local infrastructure. The call is synchronous, in the sense that the caller is blocked until all physical node have replied, this guarantees that when the control is given back to the caller, it has the most updated state of the network. In response to a `DISCOVERREQUEST`, the local infrastructure immediately replies with the list of local processes and then starts sending `DISCOVER` messages to all known remote nodes, in order to be aware also on processes running on remote machines. 
+When a remote network infrastrucure receives a `DISCOVER` message it responds directly with a `DISCOVERREPLY` containing the list of its local active processes to the sender of the `DISCOVER`. In turn, the network infrastructure which originated the `DISCOVER` on reception of the `DISCOVERREPLY` directly forwards it to the process which started the request. At the end, when all the `DISCOVERREPLY` have been received, such process has the list of all known processes running on the network.
 
 #### Keeping track of active nodes on network
 
@@ -77,19 +87,32 @@ The class `Tracker` is responsable to track local active processes. Each network
 To avoid useless traffic generated from nodes not hosting the name server, the detection of death physical nodes is performed by `NamingRequestHandler`, which indeed is the only interested in updating the list of kwnown active IPs. Like the tracker class, the name service periodically sends PING messages, but in this case to all known remote network infrastructure. Again these are considered alive if the response is received before a given timeout. 
 On the contrary, if a response is not received, the node is considered death, as well as all its processes. The name server removes its reference from the list of known IPs, and then signals this event by sending a `DISCOVERKILL` in broadcast. Such message has as effect to unlock any process blocked on a DISCOVER because waiting for a response from a death node.
 
-Next time a process generates a DISCOVER, the naming request generated as a consequence will return the correct list of active nodes, avoiding the problem, and not reporting as active all processes which were hosted by the death node.
+Next time a process starts a DISCOVER, the naming request generated as a consequence will return the correct list of active nodes, avoiding the problem, and not reporting as active all processes which were hosted by the death node.
 
-### JSON message format
+### Message format
 
+Although the network stack sends and receives strings, in order to build protocols which are usable we need some string formatting. This network stack requires that string exchanged by processes are formatted in JSON. To ease the work to consumers, a class `Message` is offered. `Message` simply offers a way to build messages without think to its specific JSON structure. 
+
+Create a message is as simply as follow:
+
+``` java
+Message msg = new Message(recipientUUID, payload, messageType);
+```
+
+The method `.getJSON()` automatically generates the corresponding string formatted in JSON, ready to be sent by the network interface.
+When a message leaves the network interface, it is structured as follow (i.e. this is what is seen by the network infrastructure):
 ```
 {
 	RECIPIENTID : UUID<Long>,
 	SENDERID    : UUID<Long>,
-	VALUE       : Paxos value<Integer>,
-	AGENTTYPE   : Type of agent to which this message is directed<String>
+	VALUE       : payload<String>,
 	MSGTYPE     : Type of message<String>
-	FORWARDTYPE : Type of forwarding (broadcast/unicast) (information never sent on LAN)<String>
+	FORWARDTYPE : Type of forwarding (broadcast/unicast)<String>
+	NAME        : IP address of the sender<String>
 }
 ```
 
+Informations about the sender ID, the IP address and the type of forwarding are inserted by the network stack. To force the broadcast transmission of a message, the method `.setAsBroadcast()` must be called by the sender on the specific message for which the broadcast transmission is required (before calling `.getJSON()`).
+
+Internal messages, such the ones required for the naming service, the tracker or the DISCOVER mechanism have a special structure. Many of them are composed by the only MSGTYPE field, others needs to carry special informations. Neverthless consumers never sees such messages, but only the ones built by `Message` constructor.
 

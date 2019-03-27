@@ -69,6 +69,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
     public void run(){
 	String message;
+	boolean match = false;
 	
 	while(true){
 	    try {
@@ -90,11 +91,14 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    System.out.printf("[IN ]: "+message+"\n");
 
 		    for(MessageType msgType : this.messageToProcess){
-			if(msgType.match(message))
+			if(msgType.match(message)){
 			    msgType.applyLogic(this, message);
-			else
-			    this.inboundQueue.add(message);
+			    match = true;
+			}
 		    }
+		    if(!match)
+			this.inboundQueue.add(message);
+		    match = false;
 		}
 
 		Thread.sleep(10); // avoid burning CPU

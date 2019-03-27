@@ -20,30 +20,23 @@ class MainTest {
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
-	    myProcess.updateConnectedProcessesList();
 	    while(true){
 		Thread.sleep(500);
 		myProcess.updateConnectedProcessesList();
 
 		System.out.printf(myProcess.lookupConnectedProcesses().toString()+"%n");
 		
-		/*Message msg = new Message(null, "ciao" , MessageType.PAXOS);
+		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
 		msg.setAsBroadcast();
-		myProcess.sendMessage(msg.getJSON());*/
-
-		/*		Message msg = new Message(null, "prova", MessageType.NAMINGREQUEST);
 		myProcess.sendMessage(msg.getJSON());
 
-		JsonObject nn = new JsonObject();
-		nn.add("MSGTYPE", MessageType.NAMINGUPDATE.toString());
-		myProcess.sendMessage(nn.toString());*/
-		/*
 		if(myProcess.isThereAnyMessage()){
-		    Message receivedMessage = new Message(myProcess.receiveMessage());
+		    String msgs = myProcess.receiveMessage();
+		    Message receivedMessage = new Message(msgs);
 		    // example of reply
-		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.PAXOS);
+		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.PREPAREREQUEST);
 		    myProcess.sendMessage(msg.getJSON());
-		    }*/
+		}
 	    }
 	}catch(Exception w){
 	    w.printStackTrace();

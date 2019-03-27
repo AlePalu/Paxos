@@ -289,7 +289,7 @@ public enum MessageType implements TrafficRule{
 		if(actualForwardType.equals(ForwardType.BROADCAST.toString())){ // truly broadcast trasmission
 		    // add remote nodes
 		    sockets.addAll(SocketRegistry.getInstance().getRemoteNodeRegistry().values());
-
+ 
 		    // avoid flooding the network with broadcast messages, make this message a LOCALBROADCAST one
 		    Jmessage.remove(MessageField.FORWARDTYPE.toString());
 		    Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.LOCALBROADCAST.toString());
