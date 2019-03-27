@@ -24,7 +24,6 @@ public class Test {
         System.out.println(a3.getid()+" think java is wonderful");
 
         Thread.sleep(100);
-        System.out.println("via");
 
         a1.propose("java sucks");*/
 	// Thread.sleep(1000);

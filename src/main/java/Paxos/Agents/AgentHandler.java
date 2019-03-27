@@ -4,6 +4,8 @@ import Paxos.Network.LocalNetworkProcess;
 import Paxos.Network.Message;
 import Paxos.Network.NetworkInterface;
 
+import java.net.Inet4Address;
+
 
 public class AgentHandler implements Runnable {
     public NetworkInterface network;
@@ -29,9 +31,10 @@ public class AgentHandler implements Runnable {
 
     public AgentHandler(Long n, String path){
         try {
-            network = new LocalNetworkProcess("127.0.0.1",40000,n);
+            network = new LocalNetworkProcess(Inet4Address.getLocalHost().getHostAddress(),40000,n);
             Thread netThread = new Thread(network);
             netThread.start();
+            network.updateConnectedProcessesList();
             //wait set up network
             Thread.sleep(100);
             this.data = new PaxosData(network.lookupConnectedProcesses().size(),n);
@@ -71,6 +74,7 @@ public class AgentHandler implements Runnable {
     }
 
     private void respons(Message m){
+        System.out.println("[Paxos IN] "+ m);
         Message response = null;
         switch (m.getMessageType()){
             case"PREPAREREQUEST":
@@ -86,6 +90,7 @@ public class AgentHandler implements Runnable {
                 break;
         }
         if (response != null) {
+            System.out.println("[Paxos Out] "+ m);
             network.sendMessage(response.getJSON());
         }
     }

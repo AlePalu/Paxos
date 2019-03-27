@@ -20,7 +20,7 @@ class MainTest {
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
-		NetworkInterface myProcess2 = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, pid);
+		NetworkInterface myProcess2 = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, 15);
 		Thread netThread2 = new Thread(myProcess2);
 		netThread2.start();
 
