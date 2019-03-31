@@ -6,13 +6,9 @@ import Paxos.Network.MessageType;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -60,7 +56,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.messageToProcess.add(MessageType.NAMINGREPLY);
 		this.messageToProcess.add(MessageType.PING);
 		this.messageToProcess.add(MessageType.DISCOVERKILL);
-
+		this.messageToProcess.add(MessageType.SUBSCRIBE); // this is simply discarded
+		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();
 		this.sendMessage(SUBSCRIBEmessage);

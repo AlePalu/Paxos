@@ -30,7 +30,9 @@ public enum MessageType implements TrafficRule{
 					  SocketRegistry.getInstance().getPendingSockets().remove(s);
 
 					  // forward to remote node
+					  Jmessage.remove(MessageField.FORWARDTYPE.toString());
 					  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+					  MessageType.forwardTo(s, Jmessage.toString());
 			      }else{ // the message comes from a remote node
 				  	SocketRegistry.getInstance().getRegistry().put(UUID,SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()));
 				  }
@@ -41,6 +43,9 @@ public enum MessageType implements TrafficRule{
 			      e.printStackTrace();
 			  }
 		      }
+		  },
+		  (o) -> {
+		      // simply ignore the message
 		  }),
 	// messages used to keep track of processes currently active on network
 	DISCOVERREPLY("DISCOVERREPLY",
