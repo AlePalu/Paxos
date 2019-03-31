@@ -62,6 +62,7 @@ class MessageForgery{
     public static String forgeSUBSCRIBE(){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.SUBSCRIBE.toString());
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
 	return Jmessage.toString();
     }    
 

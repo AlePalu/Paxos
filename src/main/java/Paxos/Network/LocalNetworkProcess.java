@@ -103,7 +103,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 			}
 		    match = false;
 		}
-
+		
 		Thread.sleep(50); // avoid burning CPU
 	    }
 	    catch (Exception e) {
