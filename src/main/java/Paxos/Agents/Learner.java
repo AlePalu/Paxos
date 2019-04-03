@@ -20,7 +20,7 @@ public class Learner {
             if (!file.exists()) {
                 file.createNewFile();
             }
-           fw  = new FileWriter(file,false);
+           fw  = new FileWriter(file,true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -29,7 +29,6 @@ public class Learner {
     void processDecisionRequest(Message m){
         currentNumOfVoter++;
         if (currentNumOfVoter > data.getNumOfProces()/2 && data.getCurrentValue() == null) {
-            System.out.println("io sono" + data.getId() + " e imparo "+ m.getValue());
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
         }
@@ -38,6 +37,7 @@ public class Learner {
 
     private void learn(String s){
         try {
+            data.reset();
             fw.append(s);
             fw.append("\n");
             fw.flush();

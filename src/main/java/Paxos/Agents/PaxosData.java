@@ -13,6 +13,10 @@ public class PaxosData {
 
     }
 
+    void reset(){
+        this.currentValue = null;
+    }
+
     long getId() {
         return id;
     }
