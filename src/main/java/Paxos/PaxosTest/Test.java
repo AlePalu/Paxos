@@ -3,12 +3,14 @@ package Paxos.PaxosTest;
 import  Paxos.Agents.*;
 
 import java.util.Scanner;
+import java.util.Random;
 
 
 public class Test {
 
     public static void main(String[] args) throws Exception{
         Scanner s = new Scanner(System.in);
+        Random r = new Random();
 
         AgentHandler a1 = new AgentHandler("./src/main/java/Paxos/PaxosTest/");
         Thread t = new Thread(a1);
@@ -23,7 +25,13 @@ public class Test {
 
         s.nextLine();
 
-        a1.propose("java sucks");
+        Thread.sleep(2000);
+
+
+        while (true){
+            Thread.sleep(1000);
+            a2.propose(""+r.nextInt());
+        }
         //Thread.sleep(1000);
         //a3.propose("java i1s wonderful");
 	/*

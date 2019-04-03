@@ -21,6 +21,7 @@ public class Proposer {
     Message propose(String val) {
         Message m;
         this.proposedValue = val;
+        this.currentNumOfVoter =0;
         m = new Message(null, null, MessageType.PREPAREREQUEST,data.getRound());
         m.setAsBroadcast();
         return m;
