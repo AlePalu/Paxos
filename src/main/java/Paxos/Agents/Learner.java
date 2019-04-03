@@ -1,13 +1,13 @@
 package Paxos.Agents;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+
 import Paxos.Network.Message;
 
 public class Learner {
 
     private FileWriter fw;
+    private BufferedReader fr;
     private PaxosData data;
     private int currentNumOfVoter;
     private boolean win = false;
@@ -21,7 +21,8 @@ public class Learner {
             if (!file.exists()) {
                 file.createNewFile();
             }
-           fw  = new FileWriter(file,true);
+            fw  = new FileWriter(file,true);
+            fr  = new BufferedReader(new FileReader(file));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -30,19 +31,27 @@ public class Learner {
     void processDecisionRequest(Message m){
         currentNumOfVoter++;
         if (currentNumOfVoter > data.getNumOfProces()/2 && !win) {
-            this.win=true;
+            this.win = true;
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
         }
 
     }
 
+    private void reset(){
+        data.reset();
+        win = false;
+
+    }
+
     private void learn(String s){
         try {
-            data.reset();
-            fw.append(s);
-            fw.append("\n");
-            fw.flush();
+            if(!fr.readLine().equals(data.getCurrentValue())) {
+                fw.append(s);
+                fw.append("\n");
+                fw.flush();
+            }
+            reset();
         } catch (IOException e) {
             e.printStackTrace();
         }

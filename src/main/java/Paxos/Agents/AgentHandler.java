@@ -74,7 +74,6 @@ public class AgentHandler implements Runnable {
     }
 
     private void respons(Message m){
-        System.out.println("[Paxos IN] "+ m);
         Message response = null;
         switch (m.getMessageType()){
             case"PREPAREREQUEST":
@@ -90,7 +89,6 @@ public class AgentHandler implements Runnable {
                 break;
         }
         if (response != null) {
-            System.out.println("[Paxos Out] "+ m);
             network.sendMessage(response.getJSON());
         }
     }
