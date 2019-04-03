@@ -79,22 +79,26 @@ public class AgentHandler implements Runnable {
 
     private void respons(Message m){
         Message response = null;
-        switch (m.getMessageType()){
-            case"PREPAREREQUEST":
-                response = a.processPrepareRequest(m);
-                break;
-            case"RESPONDTOPREPAREREQUEST":
-                response = p.processRespondToPrepareRequest();
-                break;
-            case "ACCEPTREQUEST":
-                response = a.processAcceptRequest(m);
-            case "DECISION":
-                l.processDecisionRequest(m);
-                break;
-        }
-        if (response != null) {
-            network.sendMessage(response.getJSON());
-        }
+        try {
+            switch (m.getMessageType()) {
+                case "PREPAREREQUEST":
+                    response = a.processPrepareRequest(m);
+                    break;
+                case "RESPONDTOPREPAREREQUEST":
+                    response = p.processRespondToPrepareRequest();
+                    break;
+                case "ACCEPTREQUEST":
+                    network.updateConnectedProcessesList();
+                    data.setNumOfProces(network.lookupConnectedProcesses().size());
+                    response = a.processAcceptRequest(m);
+                case "DECISION":
+                    l.processDecisionRequest(m);
+                    break;
+            }
+            if (response != null) {
+                network.sendMessage(response.getJSON());
+            }
+        }catch(Exception e){}
     }
 
     public long getid(){

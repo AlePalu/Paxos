@@ -50,6 +50,7 @@ class Main{
 	    Tracker.init(2);
 	    
 	}catch(Exception e){
+		e.printStackTrace();
 	    return;
 	}
     }

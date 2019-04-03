@@ -47,7 +47,7 @@ public class PaxosData {
     }
 
     int getRound(){
-        return round;
+        return this.round;
     }
 
     boolean isWin(){

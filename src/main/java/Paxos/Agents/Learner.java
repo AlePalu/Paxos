@@ -25,22 +25,27 @@ public class Learner {
         }
     }
 
-    void processDecisionRequest(Message m){
-        currentNumOfVoter++;
+    synchronized void processDecisionRequest(Message m){
+        if(data.getRound() == m.getRound())
+            currentNumOfVoter++;
+        System.out.println(data.getId()+"  process "+data.getNumOfProces());
         if (currentNumOfVoter > data.getNumOfProces()/2 && data.getRound() == m.getRound()) {
+            System.out.println("round "+data.getRound()+" round messaggio "+m.getRound() +" "+m.getValue()+" sono il "+currentNumOfVoter);
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
         }
 
     }
 
-    private void reset(){
+    synchronized private void reset(){
+        System.out.println("aggiorno round e sono "+currentNumOfVoter+" con valore "+ data.getCurrentValue());
         currentNumOfVoter = 0;
+
         data.reset();
         data.nextRound();
     }
 
-    private void learn(String s){
+    synchronized private void learn(String s){
         try {
             fw.append(s);
             fw.append("\n");
