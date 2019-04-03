@@ -4,18 +4,19 @@ import  Paxos.Agents.*;
 
 import java.util.Scanner;
 
+
 public class Test {
 
     public static void main(String[] args) throws Exception{
         Scanner s = new Scanner(System.in);
 
-        AgentHandler a1 = new AgentHandler((long)1,"./src/main/java/Paxos/PaxosTest/");
+        AgentHandler a1 = new AgentHandler("./src/main/java/Paxos/PaxosTest/");
         Thread t = new Thread(a1);
         t.start();
-        AgentHandler a2 = new AgentHandler((long)2,"./src/main/java/Paxos/PaxosTest/");
+        AgentHandler a2 = new AgentHandler("./src/main/java/Paxos/PaxosTest/");
         Thread t2 = new Thread(a2);
         t2.start();
-        AgentHandler a3 = new AgentHandler((long)3,"./src/main/java/Paxos/PaxosTest/");
+        AgentHandler a3 = new AgentHandler("./src/main/java/Paxos/PaxosTest/");
         Thread t3 = new Thread(a3);
         t3.start();
 

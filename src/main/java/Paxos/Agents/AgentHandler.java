@@ -3,6 +3,7 @@ package Paxos.Agents;
 import Paxos.Network.LocalNetworkProcess;
 import Paxos.Network.Message;
 import Paxos.Network.NetworkInterface;
+import java.security.SecureRandom;
 
 import java.net.Inet4Address;
 
@@ -15,19 +16,22 @@ public class AgentHandler implements Runnable {
     private PaxosData data;
 
 
-   /* public AgentHandler(){
-        Random r = new Random();
+   public AgentHandler(String path){
+       SecureRandom r = new SecureRandom();
         long id = Math.abs(r.nextLong());
         try {
-            network = new LocalNetworkProcess("127.0.0.1",40000,id);
+            network = new LocalNetworkProcess(Inet4Address.getLocalHost().getHostAddress(),40000,id);
             Thread netThread = new Thread(network);
-            a = new Aceptor(id);
-            l = new Learner("/home/prosdothewolf/Desktop/",id);
-            p = new Proposer();
             netThread.start();
-            p.updateProcessCount(network.lookupConnectedProcesses().size());
-        }catch(IOException e){e.printStackTrace();}
-    }*/
+            network.updateConnectedProcessesList();
+            //wait set up network
+            Thread.sleep(100);
+            this.data = new PaxosData(network.lookupConnectedProcesses().size(),id);
+            a = new Aceptor(this.data);
+            l = new Learner(this.data,path);
+            p = new Proposer(this.data);
+        }catch(Exception e){e.printStackTrace();}
+    }
 
     public AgentHandler(Long n, String path){
         try {
