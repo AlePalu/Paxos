@@ -15,7 +15,7 @@ public class Test {
         AgentHandler a2 = new AgentHandler((long)2,"./src/main/java/Paxos/PaxosTest/");
         Thread t2 = new Thread(a2);
         t2.start();
-        AgentHandler a3 = new AgentHandler((long)90,"./src/main/java/Paxos/PaxosTest/");
+        AgentHandler a3 = new AgentHandler((long)3,"./src/main/java/Paxos/PaxosTest/");
         Thread t3 = new Thread(a3);
         t3.start();
 
@@ -23,8 +23,8 @@ public class Test {
         s.nextLine();
 
         a1.propose("java sucks");
-        Thread.sleep(1000);
-        a3.propose("java i1s wonderful");
+        //Thread.sleep(1000);
+        //a3.propose("java i1s wonderful");
 	/*
         System.out.println(a1.getid()+" think java sucks");
         System.out.println(a3.getid()+" think java is wonderful");

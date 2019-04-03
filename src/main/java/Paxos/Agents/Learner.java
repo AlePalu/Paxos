@@ -35,6 +35,7 @@ public class Learner {
     }
 
     private void reset(){
+        currentNumOfVoter = 0;
         data.reset();
         data.nextRound();
     }
