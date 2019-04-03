@@ -24,12 +24,9 @@ public class Aceptor {
 
     Message processAcceptRequest(Message m) {
         Message respond;
-       // System.out.println("io sono" + data.getId() + " bound" + bound + " proposdta " + m.getSenderID());
         if (m.getSenderID() < bound) {
-           // System.out.println("io sono" + data.getId() + " e non rispondo a "+ m.getValue());
             return null;
         }
-       // System.out.println("io sono" + data.getId() + " e rispondo a "+ m.getValue());
         respond = new Message(null, m.getValue(), MessageType.DECISION);
         respond.setAsBroadcast();
         return respond;

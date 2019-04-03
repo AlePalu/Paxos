@@ -10,6 +10,7 @@ public class Learner {
     private FileWriter fw;
     private PaxosData data;
     private int currentNumOfVoter;
+    private boolean win = false;
 
     Learner(PaxosData data, String path){
         this.currentNumOfVoter=0;
@@ -28,7 +29,8 @@ public class Learner {
 
     void processDecisionRequest(Message m){
         currentNumOfVoter++;
-        if (currentNumOfVoter > data.getNumOfProces()/2 && data.getCurrentValue() == null) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && !win) {
+            this.win=true;
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
         }
