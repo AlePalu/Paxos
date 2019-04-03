@@ -7,7 +7,6 @@ import Paxos.Network.Message;
 public class Learner {
 
     private FileWriter fw;
-    private BufferedReader fr;
     private PaxosData data;
     private int currentNumOfVoter;
     private boolean win = false;
@@ -22,7 +21,6 @@ public class Learner {
                 file.createNewFile();
             }
             fw  = new FileWriter(file,true);
-            fr  = new BufferedReader(new FileReader(file));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -30,7 +28,7 @@ public class Learner {
 
     void processDecisionRequest(Message m){
         currentNumOfVoter++;
-        if (currentNumOfVoter > data.getNumOfProces()/2 && !win) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && data.getRound() != m.getRound()) {
             this.win = true;
             data.setCurrentValue(m.getValue());
             learn(data.getCurrentValue());
@@ -40,17 +38,14 @@ public class Learner {
 
     private void reset(){
         data.reset();
-        win = false;
-
+        data.nextRound();
     }
 
     private void learn(String s){
         try {
-            if(!fr.readLine().equals(data.getCurrentValue())) {
-                fw.append(s);
-                fw.append("\n");
-                fw.flush();
-            }
+            fw.append(s);
+            fw.append("\n");
+            fw.flush();
             reset();
         } catch (IOException e) {
             e.printStackTrace();

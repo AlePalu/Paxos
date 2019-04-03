@@ -17,7 +17,7 @@ public class Aceptor {
     Message processPrepareRequest(Message m){
         if(m.getSenderID()>=bound && data.getCurrentValue() == null) {
             bound = m.getSenderID();
-            return new Message(m.getSenderID(), null, MessageType.RESPONDTOPREPAREREQUEST);
+            return new Message(m.getSenderID(), null, MessageType.RESPONDTOPREPAREREQUEST,data.getRound());
         }
         return null;
     }
@@ -27,7 +27,7 @@ public class Aceptor {
         if (m.getSenderID() < bound) {
             return null;
         }
-        respond = new Message(null, m.getValue(), MessageType.DECISION);
+        respond = new Message(null, m.getValue(), MessageType.DECISION,data.getRound());
         respond.setAsBroadcast();
         return respond;
     }

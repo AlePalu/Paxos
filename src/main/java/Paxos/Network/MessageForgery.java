@@ -14,7 +14,8 @@ enum MessageField{
     NAME("NAME"),
     VALUE("VALUE"),
     NODELIST("NODELIST"),
-    TICKET("TICKET");
+    TICKET("TICKET"),
+	ROUND("ROUND");
     
     private String name;
     

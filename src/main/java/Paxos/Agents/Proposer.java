@@ -21,7 +21,7 @@ public class Proposer {
     Message propose(String val) {
         Message m;
         this.proposedValue = val;
-        m = new Message(null, null, MessageType.PREPAREREQUEST);
+        m = new Message(null, null, MessageType.PREPAREREQUEST,data.getRound());
         m.setAsBroadcast();
         return m;
     }
@@ -31,7 +31,7 @@ public class Proposer {
         currentNumOfVoter++;
         if (currentNumOfVoter > data.getNumOfProces()/2 && !win) {
             win = true;
-            respond = new Message(null, this.proposedValue, MessageType.ACCEPTREQUEST);
+            respond = new Message(null, this.proposedValue, MessageType.ACCEPTREQUEST,data.getRound());
             respond.setAsBroadcast();
             return respond;
         }
