@@ -27,7 +27,7 @@ class MainTest {
 
 		int howManyMessages;
 		
-		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST);
+		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST,1);
 
 		msg.setAsBroadcast();
 		myProcess.sendMessage(msg.getJSON());

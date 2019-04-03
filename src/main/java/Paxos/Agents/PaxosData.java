@@ -5,7 +5,7 @@ public class PaxosData {
     private String currentValue;
     private int numOfProces;
     private long id;
-    private int round =0;
+    private int round = 0;
 
     public PaxosData(int numOfProces, long id){
         this.currentValue= null;
