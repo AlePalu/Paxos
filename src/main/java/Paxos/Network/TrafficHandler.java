@@ -1,5 +1,7 @@
 package Paxos.Network;
 
+import com.eclipsesource.json.Json;
+
 // handle NetworkManager queues, sending and receiving messages to remote clients
 class TrafficHandler implements Runnable{
 
@@ -13,6 +15,9 @@ class TrafficHandler implements Runnable{
 		    if(socket.getInputStream().ready()){ // there are data ready to be readden
 			// get the message from socket
 			message = socket.getInputStream().readLine();
+
+			if(!Json.parse(message).asObject().get("MSGTYPE").asString().equals("PING"))
+				System.out.println("[IN] " +message);
 	
 			// apply traffic rule
 			for(MessageType msg : MessageType.values()){
@@ -23,7 +28,7 @@ class TrafficHandler implements Runnable{
 			}
 		    }
 		}
-		Thread.sleep(10); // avoid burning the CPU
+		Thread.sleep(50); // avoid burning the CPU
 	    }catch(Exception e){
 	        continue;
 	    }

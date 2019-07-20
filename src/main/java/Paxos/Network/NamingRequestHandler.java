@@ -30,6 +30,7 @@ public class NamingRequestHandler implements Runnable{
 	
 	try{
 	    // create file if not exists
+	    this.nodesOnNetworkFile.delete();
 	    this.nodesOnNetworkFile.createNewFile();
 	    
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure
@@ -93,7 +94,7 @@ public class NamingRequestHandler implements Runnable{
 			}
 		    }
 		}
-	    }, 500, 500);	
+	    }, 4000, 4000);	
 	
     }
 

@@ -6,13 +6,9 @@ import Paxos.Network.MessageType;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -29,16 +25,16 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     private ConcurrentLinkedQueue<String> outboundQueue;
     private long UUID;
     private HashSet<MessageType> messageToProcess;
-    
+
     // list of connected processes on network, updated by DISCOVER mechanism
     private ArrayList<Long> connectedProcesses;
 
     // required by DISCOVER mechanism
-    private HashSet<String> pendingDISCOVERREPLY;    
+    private HashSet<String> pendingDISCOVERREPLY;
     public final Lock lock;
     public final Condition discoverMessageLock;
     public final Condition namingLock;
-    
+
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
 		Socket processSocket = new Socket(ip, port); // connect to network infrastructure
 		this.socketBox = new SocketBox(processSocket);
@@ -51,7 +47,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.lock = new ReentrantLock();
 		this.discoverMessageLock = lock.newCondition();
 		this.namingLock = lock.newCondition();
-	
+
 		this.pendingDISCOVERREPLY = new HashSet<String>();
 
 		// message to process
@@ -60,6 +56,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.messageToProcess.add(MessageType.NAMINGREPLY);
 		this.messageToProcess.add(MessageType.PING);
 		this.messageToProcess.add(MessageType.DISCOVERKILL);
+		this.messageToProcess.add(MessageType.SUBSCRIBE); // this is simply discarded
 		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();
@@ -70,7 +67,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     public void run(){
 	String message;
 	boolean match = false;
-	
+
 	while(true){
 	    try {
 		if(!this.outboundQueue.isEmpty()){ // OUT
@@ -78,30 +75,33 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    String outboundMessage = outboundQueue.remove();
 		    JsonObject outboundJSONMessage = Json.parse(outboundMessage).asObject();
 		    outboundJSONMessage.add(MessageField.SENDERID.toString(), this.UUID);
- 
+
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
-		    //System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
+
+		   // System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
-		
+
 		if(this.socketBox.getInputStream().ready()){ // IN
 		    // take the message
 		    message = this.socketBox.getInputStream().readLine();
 
-		    //System.out.printf("[IN ]: "+message+"\n");
+		   // System.out.printf("[IN ]: "+message+"\n");
 
 		    for(MessageType msgType : this.messageToProcess){
-			if(msgType.match(message)){
-			    msgType.applyLogic(this, message);
-			    match = true;
-			}
+				if(msgType.match(message)){
+			    	msgType.applyLogic(this, message);
+			    	match = true;
+				}
 		    }
-		    if(!match)
-			this.inboundQueue.add(message);
+		    if(!match) {
+		    	//System.out.println("add coda "+ message);
+				this.inboundQueue.add(message);
+			}
 		    match = false;
 		}
-
-		Thread.sleep(10); // avoid burning CPU
+		
+		Thread.sleep(50); // avoid burning CPU
 	    }
 	    catch (Exception e) {
 		System.out.println("Error " + e.getMessage());
@@ -119,7 +119,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	return this.inboundQueue.poll();
     }
 
-    public Boolean isThereAnyMessage(){
+    public boolean isThereAnyMessage(){
 	return !this.inboundQueue.isEmpty();
     }
 
@@ -142,7 +142,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 	// reset the current list of known processes
 	this.connectedProcesses.clear();
-	
+
 	String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
 	this.sendMessage(DISCOVERREQUESTmessage);
 	// wait for disover processing...

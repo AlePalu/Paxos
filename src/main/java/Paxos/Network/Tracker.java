@@ -76,7 +76,7 @@ class Tracker{
 		    }	    
 		}
 
-	    },delay*100, delay*100);
+	    }, delay*100, delay*100);
 
 	// periodically keep track of processes still alive
 	timer.scheduleAtFixedRate(new TimerTask(){
@@ -94,7 +94,7 @@ class Tracker{
 		    }
 		}
 		
-	    }, delay*2000, delay*2000);
+	    }, delay*200, delay*200);
 	
     }
 
@@ -156,19 +156,41 @@ class Tracker{
     }
 
     public void removeTicket(Long UUID, Long ticketUUID){
+	// identify the ticket
+	Ticket ticket = null;
 	for(Ticket t : this.trackingList.get(UUID)){
 	    if(t.UUID.equals(ticketUUID)){
+		ticket = t;
+		this.trackingList.get(UUID).remove(t);
+		break;
+	    }
+	}
+	
+	// remove any ticket still present having a timestamp older than this one    
+	for(Ticket t : this.trackingList.get(UUID)){
+	    if(t.timestamp < ticket.timestamp){
 		this.trackingList.get(UUID).remove(t);
 	    }
 	}
     }
 
      public void removeTicket(String nodeUUID, Long ticketUUID){
-	for(Ticket t : this.nodeList.get(nodeUUID)){
-	    if(t.UUID.equals(ticketUUID)){
-		this.nodeList.get(nodeUUID).remove(t);
-	    }
-	}
+	 // identify the ticket
+	 Ticket ticket = null;
+	 for(Ticket t : this.nodeList.get(nodeUUID)){
+	     if(t.UUID.equals(ticketUUID)){
+		 ticket = t;
+		 this.nodeList.get(nodeUUID).remove(t);
+		 break;
+	     }
+	 }
+
+	 // remove any ticket still present having a timestamp older than this one
+	 for(Ticket t : this.nodeList.get(nodeUUID)){
+	     if(t.timestamp < ticket.timestamp){
+		 this.nodeList.get(nodeUUID).remove(t);
+	     }
+	 }
     }
 
     

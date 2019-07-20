@@ -14,7 +14,8 @@ enum MessageField{
     NAME("NAME"),
     VALUE("VALUE"),
     NODELIST("NODELIST"),
-    TICKET("TICKET");
+    TICKET("TICKET"),
+	ROUND("ROUND");
     
     private String name;
     
@@ -62,6 +63,7 @@ class MessageForgery{
     public static String forgeSUBSCRIBE(){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.SUBSCRIBE.toString());
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
 	return Jmessage.toString();
     }    
 

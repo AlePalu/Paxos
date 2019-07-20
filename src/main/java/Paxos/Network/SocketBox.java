@@ -43,13 +43,16 @@ public class SocketBox{
 	    JsonObject Jmessage = Json.parse(message).asObject();
 	    if (Jmessage.get(MessageField.NAME.toString()) == null) // if a name field is already present, don't append a new one (this cause problems with name server)
 		outboundJSONMessage.add(MessageField.NAME.toString(), Inet4Address.getLocalHost().getHostAddress());
+
+	   // if(!Jmessage.get(MessageField.MSGTYPE.toString()).asString().equals(MessageType.PING.toString()))
+		//System.out.printf(message+"%n");
 	    
 	    // send the message
 	    this.socketOutputStream.write(outboundJSONMessage.toString());
 	    this.socketOutputStream.newLine();
 	    this.socketOutputStream.flush();
 	}catch(Exception e){
-	    
+	    return;
 	}
     }
     
