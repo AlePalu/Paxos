@@ -88,7 +88,7 @@ public class NamingRequestHandler implements Runnable{
 				// remove any ticket associated with it
 				Tracker.getInstance().getNamingTickets().remove(entry.getKey());
 				
-				// send a DISCOVERKILL in broadcast
+				// send a SIGUNLOCK in broadcast
 				String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, null);
 				getSocketBox().sendOut(SIGUNLOCKmessage);
 			    }

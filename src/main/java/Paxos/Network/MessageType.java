@@ -122,12 +122,23 @@ public enum MessageType implements TrafficRule{
 			 else // to remote node
 			     SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()).sendOut(DISCOVERREPLYmessage);
 		     }catch(Exception e){
-			 // update NAMING if sender is not known
 			 if(SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()) == null){
-			     	String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
-				s.sendOut(NAMINGREQUESTmessage);
+			     // open connection with remote node
+			     String remoteIP = Jmessage.get(MessageField.NAME.toString()).asString();
+
+			     try{
+				 Socket socket = new Socket(remoteIP, 40000);
+				 SocketBox socketBox = new SocketBox(socket);
+			     	 // set the machineUUID for this connection, the mine. All outgoing traffic must be signed with my machineUUID
+				 socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
+				 SocketRegistry.getInstance().getRemoteNodeRegistry().put(remoteIP, socketBox);
+			     }catch(Exception ex){
+				 return;
+			     }
+			     
+			     // now can reply
+			     SocketRegistry.getInstance().getRemoteNodeRegistry().get(remoteIP).sendOut(DISCOVERREPLYmessage);
 			 }
-			 e.printStackTrace();
 		     }
 		 }),
 	DISCOVERREQUEST("DISCOVERREQUEST",
@@ -255,7 +266,7 @@ public enum MessageType implements TrafficRule{
 				SocketRegistry.getInstance().getRemoteNodeRegistry().get(IP).sendOut(m);
 			    }
 
-			    // remove the ticket associated with this request
+			    // remove the ticket associated with this request (ONLY IF NAMING IS RUNNING ON THIS NODE!!)
 			    Long ticket = Jmessage.get(MessageField.TICKET.toString()).asLong();
 			    Long sender = Jmessage.get(MessageField.RECIPIENTID.toString()).asLong();
 			    Tracker.getInstance().removeTicket(sender, ticket);
@@ -301,8 +312,6 @@ public enum MessageType implements TrafficRule{
 			 String newName = Jmessage.get(MessageField.NAME.toString()).asString();
 			 long machineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
 
-			 System.out.printf(machineUUID+" MACHINEUUID%n");
-			 
 			 // add node to the list of available nodes
 			 process.recordName(newName, machineUUID);
 
@@ -338,6 +347,14 @@ public enum MessageType implements TrafficRule{
 		     },
 		     (o) -> {
 			 LocalNetworkProcess process = (LocalNetworkProcess) o[0];
+			 String message = (String) o[1];
+
+			 JsonObject Jmessage = Json.parse(message).asObject();
+			 // there was a name fault??
+			 if(Jmessage.get(MessageField.SIGTYPE.toString()).asString().equals("NAMEFAULT")){
+			     process.nameFault = true;
+			 }
+			 
 			 // simply nullify any pending discover by unlocking the process
 			 process.lock.lock();
 			 process.namingLock.signalAll();

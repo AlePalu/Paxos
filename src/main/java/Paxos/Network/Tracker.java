@@ -86,12 +86,9 @@ class Tracker{
 				    // remove any ticket associated with it
 				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
 				    
-				    // SIGUNLOCK only unlock processess waiting for some event, add info about the fault
-				    JsonObject sigType = new JsonObject();
-				    sigType.add("NAMEFAULT", "true");
-
 				    // if something was wrong in the naming request, the client is still waiting for a response. Unlock it
-				    MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, sigType);
+				    String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.UNICAST, "NAMEFAULT");
+				    t.socket.sendOut(SIGUNLOCKmessage);
 				    // now is responsability of the processes to perform the election...
 				}
 				// if this expires, no one have sent me a BULLYSUPPRESS, then I'll be the new name server

@@ -121,7 +121,7 @@ class MessageForgery{
 	return forgePING(null);
     }
 
-    public static String forgeSIGUNLOCK(ForwardType forward, JsonObject sigType){
+    public static String forgeSIGUNLOCK(ForwardType forward, String sigType){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.SIGUNLOCK.toString());
 
