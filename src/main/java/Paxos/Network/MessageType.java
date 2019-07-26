@@ -122,6 +122,11 @@ public enum MessageType implements TrafficRule{
 			 else // to remote node
 			     SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()).sendOut(DISCOVERREPLYmessage);
 		     }catch(Exception e){
+			 // update NAMING if sender is not known
+			 if(SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()) == null){
+			     	String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
+				s.sendOut(NAMINGREQUESTmessage);
+			 }
 			 e.printStackTrace();
 		     }
 		 }),
@@ -147,14 +152,17 @@ public enum MessageType implements TrafficRule{
 	// messages used for naming services
 	NAMINGREQUEST("NAMINGREQUEST",
 		      (s,m) -> {
-			  SocketRegistry.getInstance().getNamingSocket().sendOut(m);
-			  
 			  // issue a ticket for the naming request
 			  Random rng = new Random();
 			  Long randomNumber = Math.abs(rng.nextLong());
 			  JsonObject Jmessage = Json.parse(m).asObject();
 			  // keep track of this naming request...
 			  Tracker.getInstance().issueTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), 5000, randomNumber, "NAMINGREQUEST", s);
+
+			  // add the ticket to the request
+			  Jmessage.add(MessageField.TICKET.toString(), randomNumber);
+			  
+			  SocketRegistry.getInstance().getNamingSocket().sendOut(Jmessage.toString());
 		      },
 		      (o) -> {
 			  NamingRequestHandler process = (NamingRequestHandler) o[0];
@@ -187,10 +195,12 @@ public enum MessageType implements TrafficRule{
 			  if(Jmessage.get(MessageField.SENDERID.toString()) != null){ // request originated by a remote process
 			      NAMINGREPLYmessage = MessageForgery.forgeNAMINGREPLY(nodesList,
 										   Jmessage.get(MessageField.SENDERID.toString()).asLong(),
-										   Jmessage.get(MessageField.NAME.toString()).asString());
+										   Jmessage.get(MessageField.NAME.toString()).asString(),
+										   Jmessage.get(MessageField.TICKET.toString()).asLong());
 			  }else{ // request originated by a remote network infrastructure
 			      NAMINGREPLYmessage = MessageForgery.forgeNAMINGREPLY(nodesList,
-										   Jmessage.get(MessageField.NAME.toString()).asString());
+										   Jmessage.get(MessageField.NAME.toString()).asString(),
+										   Jmessage.get(MessageField.TICKET.toString()).asLong());
 			  }
 			  process.getSocketBox().sendOut(NAMINGREPLYmessage);
 		      }),
@@ -207,8 +217,7 @@ public enum MessageType implements TrafficRule{
 				SocketRegistry.getInstance().getRemoteNodeList().clear();
 				for(JsonValue node : nodeList){
 				    // each node is encoded in a JsonObject
-				    JsonObject Jmachine = node.asObject();
-				    
+				    JsonObject Jmachine = node.asObject();				    
 				    SocketRegistry.getInstance().getRemoteNodeList().add(Jmachine.get("IP").asString());
 				}
 
@@ -245,7 +254,14 @@ public enum MessageType implements TrafficRule{
 				// forward the message to the remote sender
 				SocketRegistry.getInstance().getRemoteNodeRegistry().get(IP).sendOut(m);
 			    }
+
+			    // remove the ticket associated with this request
+			    Long ticket = Jmessage.get(MessageField.TICKET.toString()).asLong();
+			    Long sender = Jmessage.get(MessageField.RECIPIENTID.toString()).asLong();
+			    Tracker.getInstance().removeTicket(sender, ticket);
+			    
 			}catch(Exception e){
+			    e.printStackTrace();
 			    return;
 			}
 		    },

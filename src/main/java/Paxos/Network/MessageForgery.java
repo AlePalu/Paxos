@@ -89,18 +89,19 @@ class MessageForgery{
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGREPLY(JsonArray nodeList, Long recipientID, String name){
+    public static String forgeNAMINGREPLY(JsonArray nodeList, Long recipientID, String name, Long ticket){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGREPLY.toString());
 	Jmessage.add(MessageField.NODELIST.toString(), nodeList);
 	if(recipientID != null)
 	    Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
 	Jmessage.add(MessageField.NAME.toString(), name);
+	Jmessage.add(MessageField.TICKET.toString(), ticket);
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGREPLY(JsonArray nodeList, String name){
-	return forgeNAMINGREPLY(nodeList, null, name);
+    public static String forgeNAMINGREPLY(JsonArray nodeList, String name, Long ticket){
+	return forgeNAMINGREPLY(nodeList, null, name, ticket);
     }
 
     public static String forgePING(Long recipientID){
