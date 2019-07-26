@@ -6,6 +6,7 @@ import Paxos.Network.MessageType;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
@@ -35,10 +36,13 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     public final Condition discoverMessageLock;
     public final Condition namingLock;
 
+    // required by naming server fault detection
+    public Boolean nameFault;
+    
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
 		Socket processSocket = new Socket(ip, port); // connect to network infrastructure
 		this.socketBox = new SocketBox(processSocket);
-
+		
 		// initialize internal state
 		this.UUID = UUID;
 		this.inboundQueue = new ConcurrentLinkedQueue<String>();
@@ -55,13 +59,14 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.messageToProcess.add(MessageType.DISCOVERREPLY);
 		this.messageToProcess.add(MessageType.NAMINGREPLY);
 		this.messageToProcess.add(MessageType.PING);
-		this.messageToProcess.add(MessageType.DISCOVERKILL);
-		this.messageToProcess.add(MessageType.SUBSCRIBE); // this is simply discarded
+		this.messageToProcess.add(MessageType.SIGUNLOCK);
+		this.messageToProcess.add(MessageType.SUBSCRIBE); // get my machineUUID from here
 		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();
 		this.sendMessage(SUBSCRIBEmessage);
-
+		
+		this.nameFault = false;
     }
 
     public void run(){
@@ -86,18 +91,15 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    // take the message
 		    message = this.socketBox.getInputStream().readLine();
 
-		   // System.out.printf("[IN ]: "+message+"\n");
-
 		    for(MessageType msgType : this.messageToProcess){
 				if(msgType.match(message)){
-			    	msgType.applyLogic(this, message);
-			    	match = true;
+				    msgType.applyLogic(this, message);
+				    match = true;
 				}
 		    }
 		    if(!match) {
-		    	//System.out.println("add coda "+ message);
-				this.inboundQueue.add(message);
-			}
+			this.inboundQueue.add(message);
+		    }
 		    match = false;
 		}
 		
@@ -110,7 +112,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 	}
     }
-
+    
     public void sendMessage(String message){
 	this.outboundQueue.add(message);
     }
@@ -132,6 +134,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	// force update of known node on network
 	String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
        	this.sendMessage(NAMINGREQUESTmessage);
+	
 	// wait for naming processing...
 	lock.lock();
 	try {
@@ -140,22 +143,40 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	    lock.unlock();
 	}
 
-	// reset the current list of known processes
-	this.connectedProcesses.clear();
+	if(!nameFault){
+	    // reset the current list of known processes
+	    this.connectedProcesses.clear();
 
-	String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
-	this.sendMessage(DISCOVERREQUESTmessage);
-	// wait for disover processing...
-	lock.lock();
-	try{
-	    discoverMessageLock.await();
-	}finally{
-	    lock.unlock();
+	    String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
+	    this.sendMessage(DISCOVERREQUESTmessage);
+	    // wait for disover processing...
+	    lock.lock();
+	    try{
+		discoverMessageLock.await();
+	    }finally{
+		lock.unlock();
+	    }    
+	}else{ 
+	    /* name server fault.
+	       Possible naming failures are handled by a bully election mechanism by which at the end a new name server is elected. 
+	       Since election requires to elect a new physical node where run a new name server, the local process does not handle the election, but simply signals to its network infrastructure to start it. */
+
+	    System.out.printf("NAME SERVER FAULT%n");
+	    
+	    String BULLYREQUESTmessage = MessageForgery.forgeBULLYREQUEST();
+	    this.sendMessage(BULLYREQUESTmessage);
 	}
     }
 
-
     public HashSet<String> getPendingDiscoverList(){
 	return this.pendingDISCOVERREPLY;
+    }
+    
+    public long getProcessUUID(){
+	return this.UUID;
+    }
+
+    public SocketBox getSocketBox(){
+	return this.socketBox;
     }
 }

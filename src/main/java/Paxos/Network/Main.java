@@ -3,10 +3,12 @@ package Paxos.Network;
 import java.net.Inet4Address;
 import java.net.Socket;
 
+import java.util.UUID;
+
 class Main{
 
     public static void main(String[] args) {
-
+	
 	if(args.length == 0){
 	    System.out.printf("[Main]: No naming node IP inserted. Aborting.%n");
 	    return;
@@ -15,7 +17,14 @@ class Main{
 	String namingNodeIP = args[0];
 	
 	System.out.printf("[Main]: started\n");
-	System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");
+
+	UUID randomUUID = UUID.randomUUID();
+	long UUID = randomUUID.getMostSignificantBits() & Long.MAX_VALUE;
+	
+	System.out.printf("[Main]: machine UUID: "+UUID+"\n");
+	SocketRegistry.getInstance().setMachineUUID(UUID);
+	
+	System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");	
 	
 	try{
 	    ConnectionHandler connectionHandler = new ConnectionHandler(40000);
@@ -27,9 +36,9 @@ class Main{
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
 
 		// give time to network infrastructure to go up
-		Thread.sleep(1000);
+		Thread.sleep(500);
 		
-		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000);
+		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, UUID);
 		Thread namingThread = new Thread(namingHandler);
 		namingThread.start();
 	    }else{

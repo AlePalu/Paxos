@@ -25,7 +25,7 @@ public class NamingRequestHandler implements Runnable{
     Timer timer;
 
     
-    public NamingRequestHandler(String ip, int port){
+    public NamingRequestHandler(String ip, int port, long UUID){
 	this.nodesOnNetworkFile = new File("processList.txt");
 	
 	try{
@@ -35,6 +35,7 @@ public class NamingRequestHandler implements Runnable{
 	    
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure
 	    this.socketBox = new SocketBox(connSocket);
+	    this.socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 
 	    // subscribe the naming service to the local network infrastucture
 	    String NAMINGSUBSCRIBEmessage = MessageForgery.forgeNAMINGSUBSCRIBE();
@@ -42,7 +43,7 @@ public class NamingRequestHandler implements Runnable{
 
 	    // insert the IP of the machine where naming service is running in the available nodes
 	    String myIP = Inet4Address.getLocalHost().getHostAddress();
-	    recordName(myIP);
+	    recordName(myIP, SocketRegistry.getInstance().getMachineUUID());
 
 	    // populate the set with messages name server has to process
 	    messageToProcess = new HashSet<MessageType>();
@@ -88,8 +89,8 @@ public class NamingRequestHandler implements Runnable{
 				Tracker.getInstance().getNamingTickets().remove(entry.getKey());
 				
 				// send a DISCOVERKILL in broadcast
-				String DISCOVERKILLmessage = MessageForgery.forgeDISCOVERKILL();
-				getSocketBox().sendOut(DISCOVERKILLmessage);
+				String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, null);
+				getSocketBox().sendOut(SIGUNLOCKmessage);
 			    }
 			}
 		    }
@@ -127,7 +128,7 @@ public class NamingRequestHandler implements Runnable{
 	return this.socketBox;
     }
     
-    public void recordName(String name){
+    public void recordName(String name, long machineUUID){
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
@@ -139,7 +140,8 @@ public class NamingRequestHandler implements Runnable{
 	    return;
 	}
 	try(FileWriter fileWriter = new FileWriter(this.nodesOnNetworkFile, true)){
-	    String in = name+"\n";
+	    Long UUID = new Long(machineUUID);
+	    String in = name+","+UUID.toString()+"\n";
 	    fileWriter.write(in);
 	    fileWriter.flush();
         }catch(Exception e){

@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.Json;
 
+import Paxos.Network.*;
+
 class Ticket{
 
     Long timestamp;
@@ -20,12 +22,15 @@ class Ticket{
     Long UUID;
     String namingUUID;
     String ticketType;
+    LocalNetworkProcess process;
+    SocketBox socket;
     
-    public Ticket(Long timestamp, int expirationThreshold, Long UUID, String ticketType){
+    public Ticket(Long timestamp, int expirationThreshold, Long UUID, String ticketType, SocketBox socket){
 	this.timestamp = timestamp;
 	this.expirationThreshold = expirationThreshold;
 	this.UUID = UUID;
 	this.ticketType = ticketType;
+	this.socket = socket;
     }
 
     // used for name server tickets
@@ -70,7 +75,29 @@ class Tracker{
 
 				    // remove any ticket associated with it
 				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
-				}	
+				}
+				// no response received from the naming server, considered it death. Start election of new naming server
+				if(t.ticketType.equals(MessageType.NAMINGREQUEST.toString())){ 
+				    System.out.printf("[Tracker]: No response received from the naming server, considered it death.");
+
+				    // removing association with naming service
+				    SocketRegistry.getInstance().getNamingSocket().close();
+
+				    // remove any ticket associated with it
+				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
+				    
+				    // SIGUNLOCK only unlock processess waiting for some event, add info about the fault
+				    JsonObject sigType = new JsonObject();
+				    sigType.add("NAMEFAULT", "true");
+
+				    // if something was wrong in the naming request, the client is still waiting for a response. Unlock it
+				    MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, sigType);
+				    // now is responsability of the processes to perform the election...
+				}
+				// if this expires, no one have sent me a BULLYSUPPRESS, then I'll be the new name server
+				if(t.ticketType.equals(MessageType.ELECT.toString())){
+				    
+				}
 			    }
 			}
 		    }	    
@@ -88,7 +115,7 @@ class Tracker{
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
 			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry, 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
+			Tracker.getInstance().issueTicket(entry, 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString(), null);
 			// send the message
 			SocketRegistry.getInstance().getRegistry().get(entry).sendOut(PINGmessage);
 		    }
@@ -108,9 +135,9 @@ class Tracker{
 	return instance;
     }
     
-    public void issueTicket(Long UUID, int expirationThreshold, Long ticketUUID, String ticketType){
+    public void issueTicket(Long UUID, int expirationThreshold, Long ticketUUID, String ticketType, SocketBox socket){
 	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType);
+	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType, socket);
 
 	// create a field for this UUID
 	if(!trackingList.keySet().contains(UUID))
@@ -124,10 +151,9 @@ class Tracker{
 	}
     }
 
-     
     public void issueTicket(String nameUUID, int expirationThreshold, Long ticketUUID, String ticketType){
 	Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType);
+	Ticket newTicket = new Ticket(currentTimestamp.getTime(), expirationThreshold, ticketUUID, ticketType, null);
 
 	// create a field for this node
 	if(!nodeList.keySet().contains(nameUUID))
@@ -191,6 +217,15 @@ class Tracker{
 		 this.nodeList.get(nodeUUID).remove(t);
 	     }
 	 }
+    }
+
+    // remove ticket on the base of its type
+    public void removeTicket(Long UUID, String ticketType){
+	for(Ticket t : this.trackingList.get(UUID)){
+	    if(t.ticketType.equals(ticketType)){
+		this.trackingList.get(UUID).remove(t);
+	    }
+	}
     }
 
     

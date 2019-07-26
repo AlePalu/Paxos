@@ -3,6 +3,8 @@ package Paxos.NetworkTest;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.InetAddress;
+import java.util.Random;
+
 
 import com.eclipsesource.json.JsonObject;
 
@@ -12,30 +14,22 @@ class MainTest {
     
     public static void main(String[] args) {
 	// get pid of this process
-	final RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
-	final long pid = runtime.getPid();
+	//final RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+	//final long pid = runtime.getPid();
 
+	Random rng = new Random();
+	Long pid = Math.abs(rng.nextLong());
+		
 	try{
-	    NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, 20);
+	    NetworkInterface myProcess = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, pid);
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
-		NetworkInterface myProcess2 = new LocalNetworkProcess(InetAddress.getLocalHost().getHostAddress(), 40000, 15);
-		Thread netThread2 = new Thread(myProcess2);
-		netThread2.start();
-
-
-		int howManyMessages;
+	    System.out.printf(myProcess+"%n");
 		
-		Message msg = new Message(null, "ciao" , MessageType.PREPAREREQUEST,1);
-
-		msg.setAsBroadcast();
-		myProcess.sendMessage(msg.getJSON());
+	    while(true){
+		Thread.sleep(1000);
 		
-		while(true){
-		Thread.sleep(2000);
-		System.out.println("Start");
-		/*
 		myProcess.updateConnectedProcessesList();
 		System.out.println(myProcess.lookupConnectedProcesses());
 		
@@ -46,12 +40,12 @@ class MainTest {
 		    System.out.printf("[MessageReceived]: "+msgs+"%n");
 		    
 		    // example of reply
-		    msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST);
+		    Message msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST, 1);
 
 		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
 		    
 		    myProcess.sendMessage(msg.getJSON());
-		    }*/
+		}
 
 	    }
 	}catch(Exception w){

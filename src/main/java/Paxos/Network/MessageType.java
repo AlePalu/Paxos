@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public enum MessageType implements TrafficRule{ 
 	SUBSCRIBE("SUBSCRIBE",
@@ -25,18 +26,20 @@ public enum MessageType implements TrafficRule{
 			      if(Jmessage.get(MessageField.NAME.toString()).asString().equals(Inet4Address.getLocalHost().getHostAddress()) &&
 					      !Jmessage.get(MessageField.FORWARDTYPE.toString()).asString().equals(ForwardType.LOCALBROADCAST.toString())){ // local message
 
-					  // bind the socketBox to the UUID of the sender
-					  SocketRegistry.getInstance().addElement(UUID, s);
-					  SocketRegistry.getInstance().getPendingSockets().remove(s);
+				  // associate to this SocketBox the machineUUID
+				  s.setUUID(SocketRegistry.getInstance().getMachineUUID());
+				  
+				  // bind the socketBox to the UUID of the sender
+				  SocketRegistry.getInstance().addElement(UUID, s);
+				  SocketRegistry.getInstance().getPendingSockets().remove(s);
 
-					  // forward to remote node
-					  Jmessage.remove(MessageField.FORWARDTYPE.toString());
-					  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
-					  MessageType.forwardTo(s, Jmessage.toString());
+				  // forward to remote node
+				  Jmessage.remove(MessageField.FORWARDTYPE.toString());
+				  Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+				  MessageType.forwardTo(s, Jmessage.toString());
 			      }else{ // the message comes from a remote node
-				  	SocketRegistry.getInstance().getRegistry().put(UUID,SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()));
+				  SocketRegistry.getInstance().getRegistry().put(UUID,SocketRegistry.getInstance().getRemoteNodeRegistry().get(Jmessage.get(MessageField.NAME.toString()).asString()));
 				  }
-			      System.out.printf(SocketRegistry.getInstance().getRegistry().toString()+"%n");
 			  }
 			  catch (Exception e) {
 			      System.out.println("Error " + e.getMessage());
@@ -45,7 +48,19 @@ public enum MessageType implements TrafficRule{
 		      }
 		  },
 		  (o) -> {
-		      // simply ignore the message
+		      // get machineUUID from the SUBSCRIBE, which is echoed to all processes on network
+		      LocalNetworkProcess process = (LocalNetworkProcess) o[0];
+		      String message = (String) o[1];
+		      JsonObject Jmessage = Json.parse(message).asObject();
+
+		      Long senderID = new Long(Jmessage.get(MessageField.SENDERID.toString()).asLong());
+		      
+		      // this is my SUBSCRIBE
+		      if(senderID.equals(process.getProcessUUID())){
+			  long machineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
+			  process.getSocketBox().setUUID(machineUUID);
+		      }
+		      
 		  }),
 	// messages used to keep track of processes currently active on network
 	DISCOVERREPLY("DISCOVERREPLY",
@@ -132,23 +147,40 @@ public enum MessageType implements TrafficRule{
 			}),
 	// messages used for naming services
 	NAMINGREQUEST("NAMINGREQUEST",
-		      (s,m) -> SocketRegistry.getInstance().getNamingSocket().sendOut(m),
+		      (s,m) -> {
+			  SocketRegistry.getInstance().getNamingSocket().sendOut(m);
+			  
+			  // issue a ticket for the naming request
+			  Random rng = new Random();
+			  Long randomNumber = Math.abs(rng.nextLong());
+			  JsonObject Jmessage = Json.parse(m).asObject();
+			  // keep track of this naming request...
+			  Tracker.getInstance().issueTicket(Jmessage.get(MessageField.SENDERID.toString()).asLong(), 5000, randomNumber, "NAMINGREQUEST", s);
+		      },
 		      (o) -> {
 			  NamingRequestHandler process = (NamingRequestHandler) o[0];
 			  String message = (String) o[1];
 
 			  // parse the message
 			  JsonObject Jmessage = Json.parse(message).asObject();
-			  
+
+			  // build up the list of known remote nodes
 			  JsonArray nodesList = new JsonArray();
 			  try(BufferedReader reader = new BufferedReader(new FileReader(process.getNodeFile()))){
 			      String ip = reader.readLine();
 			      while(ip != null){
-				  nodesList.add(ip);
+				  // each remote node is identified by a JSON object, containing IP and UUID of the remote machine
+				  JsonObject Jmachine = new JsonObject();
+				  // retrieve informations from file string
+				  String[] infos = ip.split(",");
+				  // packing into JsonObject...
+				  Jmachine.add("IP", infos[0]);
+				  Jmachine.add("UUID", infos[1]);
+				  nodesList.add(Jmachine);
 				  ip = reader.readLine();
 			      }
 			  }catch(Exception e){
-
+			      e.printStackTrace();
 			  }
 
 			  // send response back
@@ -175,7 +207,10 @@ public enum MessageType implements TrafficRule{
 				JsonArray nodeList = Jmessage.get(MessageField.NODELIST.toString()).asArray();
 				SocketRegistry.getInstance().getRemoteNodeList().clear();
 				for(JsonValue node : nodeList){
-				    SocketRegistry.getInstance().getRemoteNodeList().add(node.asString());
+				    // each node is encoded in a JsonObject
+				    JsonObject Jmachine = node.asObject();
+				    
+				    SocketRegistry.getInstance().getRemoteNodeList().add(Jmachine.get("IP").asString());
 				}
 
 				// open connection with new remote nodes
@@ -186,6 +221,13 @@ public enum MessageType implements TrafficRule{
 					// open connection with remote node
 					Socket socket = new Socket(remoteIP, 40000);
 					SocketBox socketBox = new SocketBox(socket);
+					// set the machineUUID for this connection
+					for(JsonValue node : nodeList){
+					    JsonObject Jmachine = node.asObject();
+					    if(Jmachine.get("UUID").equals(remoteIP)){
+						socketBox.setUUID(Jmachine.get("UUID").asLong());
+					    }
+					}
 					SocketRegistry.getInstance().getRemoteNodeRegistry().put(remoteIP, socketBox);
 				    }
 				}
@@ -222,7 +264,8 @@ public enum MessageType implements TrafficRule{
 			process.getPendingDiscoverList().clear();
 			// keep track of the DISCOVERREPLY we must wait for
 			for(JsonValue ip : Jmessage.get(MessageField.NODELIST.toString()).asArray()){
-			    process.getPendingDiscoverList().add(ip.asString());
+			    String machineIP = ip.asObject().get("IP").asString();
+	        	    process.getPendingDiscoverList().add(machineIP);
 			}
 			// signal naming is updated
 			process.lock.lock();
@@ -246,8 +289,9 @@ public enum MessageType implements TrafficRule{
 			 // parse the message
 			 JsonObject Jmessage = Json.parse(message).asObject();
 			 String newName = Jmessage.get(MessageField.NAME.toString()).asString();
+			 long machineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
 			 // add node to the list of available nodes
-			 process.recordName(newName);
+			 process.recordName(newName, machineUUID);
 
 			 System.out.printf("[NamingRequestHandler]: remote node "+newName+" registered%n");
 		     }),
@@ -275,7 +319,7 @@ public enum MessageType implements TrafficRule{
 
 		 process.sendMessage(message);
 	     }),
-	DISCOVERKILL("DISCOVERKILL",
+	SIGUNLOCK("SIGUNLOCK",
 		     (s,m) -> {
 			 MessageType.forwardTo(s,m);
 		     },
@@ -287,6 +331,47 @@ public enum MessageType implements TrafficRule{
 			 process.discoverMessageLock.signalAll();
 			 process.lock.unlock();
 		     }),
+	ELECT("ELECT",
+		     (s,m) -> {
+			 JsonObject Jmessage = Json.parse(m).asObject();
+			 // get UUID of the sender
+			 long senderMachineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
+			 // if my UUID is greater than the sender UUID, suppress its election
+			 if(SocketRegistry.getInstance().getMachineUUID() > senderMachineUUID){
+			     String BULLYSUPPRESSmessage = MessageForgery.forgeBULLYSUPPRESS();
+			     s.sendOut(BULLYSUPPRESSmessage);
+
+			     // start a new election, sending an ELECT to all nodes having UUID greater than mine
+			     String ELECTmessage = MessageForgery.forgeELECT();
+			     for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+				 if(remoteSocket.getValue().getUUID() > SocketRegistry.getInstance().getMachineUUID()){
+				     remoteSocket.getValue().sendOut(ELECTmessage);
+				 }
+			     }    
+			 }
+			 
+		     }),
+	BULLYREQUEST("BULLYREQUEST",
+		     (s,m) -> {
+			 // name server failure, send elect to all pyhisical nodes having an UUID grater than mine
+			 String ELECTmessage = MessageForgery.forgeELECT();
+			 for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+			     if(remoteSocket.getValue().getUUID() > SocketRegistry.getInstance().getMachineUUID()){
+				 remoteSocket.getValue().sendOut(ELECTmessage);
+
+				 // Emit a token to track the elect request.
+				 // When an elect token expires, I will be the new leader (If an ELECT token is still present then I've not received any BULLYSUPPRESS message, hence I'm the node still alive having the highest UUID on network)
+				 Random rng = new Random();
+				 Long randomNumber = Math.abs(rng.nextLong());
+				 Tracker.getInstance().issueTicket(SocketRegistry.getInstance().getMachineUUID(), 5000, randomNumber, MessageType.ELECT.toString(), null);
+			     }
+			 }
+		     }),
+	BULLYSUPPRESS("BULLYSUPPRESS",
+		      (s,m) -> {
+			  // I will not be the new leader, remove any ELECT token
+			  Tracker.getInstance().removeTicket(SocketRegistry.getInstance().getMachineUUID(), MessageType.ELECT.toString());
+		      }),
 	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
         PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),

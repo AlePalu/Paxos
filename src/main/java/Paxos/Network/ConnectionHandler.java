@@ -30,6 +30,7 @@ class ConnectionHandler implements Runnable{
 		Socket newSocket = incomingConnectionSocket.accept();
 	        // open output/input communication
 		SocketBox socketBox = new SocketBox(newSocket);
+		socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 		// add the client to the opened socket registry, but still pending to be binded to a UUID
 		SocketRegistry.getInstance().getPendingSockets().add(socketBox);
 
