@@ -46,6 +46,7 @@ class Main{
 		// open connection with naming service node
 		Socket namingSocket = new Socket(namingNodeIP, 40000);
 		SocketBox namingSocketBox = new SocketBox(namingSocket);
+		namingSocketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 		SocketRegistry.getInstance().setNamingSocket(namingSocketBox);
 
 		String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());

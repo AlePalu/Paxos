@@ -155,7 +155,8 @@ public class NamingRequestHandler implements Runnable{
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
-		if(!ip.equals(name))
+		String[] ipField = ip.split(",");
+		if(!ipField[0].equals(name))
 		    tmp.add(ip);
 
 		ip = reader.readLine();

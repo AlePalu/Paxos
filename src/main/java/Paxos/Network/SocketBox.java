@@ -47,7 +47,8 @@ public class SocketBox{
 		outboundJSONMessage.add(MessageField.NAME.toString(), Inet4Address.getLocalHost().getHostAddress());
 
 	    // automatically add the unique identifier of the machine, required for fault tolerance
-	    outboundJSONMessage.add(MessageField.MACHINEUUID.toString(), this.machineUUID);
+	    if(Jmessage.get(MessageField.MACHINEUUID.toString()) == null || Jmessage.get(MessageField.MACHINEUUID.toString()).asLong() == 0)
+		outboundJSONMessage.add(MessageField.MACHINEUUID.toString(), this.machineUUID);
 	    
 	    // send the message
 	    this.socketOutputStream.write(outboundJSONMessage.toString());

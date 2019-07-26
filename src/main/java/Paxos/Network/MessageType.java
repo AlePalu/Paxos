@@ -60,7 +60,6 @@ public enum MessageType implements TrafficRule{
 			  long machineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
 			  process.getSocketBox().setUUID(machineUUID);
 		      }
-		      
 		  }),
 	// messages used to keep track of processes currently active on network
 	DISCOVERREPLY("DISCOVERREPLY",
@@ -160,7 +159,7 @@ public enum MessageType implements TrafficRule{
 		      (o) -> {
 			  NamingRequestHandler process = (NamingRequestHandler) o[0];
 			  String message = (String) o[1];
-
+			  
 			  // parse the message
 			  JsonObject Jmessage = Json.parse(message).asObject();
 
@@ -221,13 +220,8 @@ public enum MessageType implements TrafficRule{
 					// open connection with remote node
 					Socket socket = new Socket(remoteIP, 40000);
 					SocketBox socketBox = new SocketBox(socket);
-					// set the machineUUID for this connection
-					for(JsonValue node : nodeList){
-					    JsonObject Jmachine = node.asObject();
-					    if(Jmachine.get("UUID").equals(remoteIP)){
-						socketBox.setUUID(Jmachine.get("UUID").asLong());
-					    }
-					}
+					// set the machineUUID for this connection, the mine. All outgoing traffic must be signed with my machineUUID
+					socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 					SocketRegistry.getInstance().getRemoteNodeRegistry().put(remoteIP, socketBox);
 				    }
 				}
@@ -290,6 +284,9 @@ public enum MessageType implements TrafficRule{
 			 JsonObject Jmessage = Json.parse(message).asObject();
 			 String newName = Jmessage.get(MessageField.NAME.toString()).asString();
 			 long machineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
+
+			 System.out.printf(machineUUID+" MACHINEUUID%n");
+			 
 			 // add node to the list of available nodes
 			 process.recordName(newName, machineUUID);
 
