@@ -25,8 +25,6 @@ class MainTest {
 	    Thread netThread = new Thread(myProcess);
 	    netThread.start();
 
-	    System.out.printf(myProcess+"%n");
-		
 	    while(true){
 		Thread.sleep(1000);
 		
@@ -35,6 +33,7 @@ class MainTest {
 		
 		if(myProcess.isThereAnyMessage()){
 		    String msgs = myProcess.receiveMessage();
+		    System.out.printf(msgs+"%n");
 		    Message receivedMessage = new Message(msgs);
 
 		    System.out.printf("[MessageReceived]: "+msgs+"%n");

@@ -20,10 +20,12 @@ class ConnectionHandler implements Runnable{
 	System.out.printf("[ConnectionHandler]: Ready to accept connections on port: "+this.incomingConnectionSocket.getLocalPort()+"\n");
 
 	// start thread for queue handling
-	TrafficHandler trafficHandler = new TrafficHandler();
-	Thread trafficHandlerThread = new Thread(trafficHandler);
+	//	TrafficHandler trafficHandler = new TrafficHandler();
+	Thread trafficHandlerThread = new Thread(TrafficHandler.getInstance());
+	TrafficHandler.getInstance().allowAll();
 	trafficHandlerThread.start();
-
+	
+	
 	while(true){
 	    try{
 		// waiting for new connection

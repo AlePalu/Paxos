@@ -16,6 +16,10 @@ import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.Random;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 // interface used by processes to communicate with the main NetworkManager server (in a client-server fashion)
 public class LocalNetworkProcess implements Runnable, NetworkInterface{
@@ -36,6 +40,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     public final Condition discoverMessageLock;
     public final Condition namingLock;
 
+    public Timer timer;
+    
     // required by naming server fault detection
     public Boolean nameFault;
     
@@ -61,6 +67,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.messageToProcess.add(MessageType.PING);
 		this.messageToProcess.add(MessageType.SIGUNLOCK);
 		this.messageToProcess.add(MessageType.SUBSCRIBE); // get my machineUUID from here
+		this.messageToProcess.add(MessageType.COORD);
 		
 		// subscribe the process to the list of connected processes
 		String SUBSCRIBEmessage = MessageForgery.forgeSUBSCRIBE();
@@ -83,8 +90,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
 		    // send message on socket
 		    this.socketBox.sendOut(outboundJSONMessage.toString());
-
-		   // System.out.printf("[OUT]: "+outboundMessage+" sent to "+this.socketBox.getSocket().getPort()+" [local netwrok server port]%n");
 		}
 
 		if(this.socketBox.getInputStream().ready()){ // IN
@@ -102,11 +107,9 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    }
 		    match = false;
 		}
-		
 		Thread.sleep(50); // avoid burning CPU
 	    }
 	    catch (Exception e) {
-		System.out.println("Error " + e.getMessage());
 		e.printStackTrace();
 	    }
 
@@ -131,10 +134,11 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
     // this force sending of DISCOVER message. Be carefull this call blocks the caller until the DISCOVERRESPONSE has been processed
     public void updateConnectedProcessesList() throws InterruptedException{
+	System.out.printf("[NetworkStack]: performing naming update...\n");
 	// force update of known node on network
 	String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
        	this.sendMessage(NAMINGREQUESTmessage);
-	
+
 	// wait for naming processing...
 	lock.lock();
 	try {
@@ -142,29 +146,56 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	}finally{
 	    lock.unlock();
 	}
-
-	if(!nameFault){
+	
+        if(!nameFault){
+	    System.out.printf("[NetworkStack]: discovering currently connected processes on network...\n");
 	    // reset the current list of known processes
 	    this.connectedProcesses.clear();
 
 	    String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
 	    this.sendMessage(DISCOVERREQUESTmessage);
-	    // wait for disover processing...
+
+	    // waiting for processes discovering...
+
+	    this.timer = new Timer();
+
+	    timer.schedule(new TimerTask(){
+		    // if after 10 seconds, no response for a DISCOVER, repeat the request (maybe system has got stucked for some name failure)
+		    public void run(){
+			lock.lock();
+			discoverMessageLock.signalAll();
+			lock.unlock();
+		    }
+		},10000);
+	    
 	    lock.lock();
 	    try{
 		discoverMessageLock.await();
 	    }finally{
 		lock.unlock();
-	    }    
+	    }
+
+	    timer.cancel();
+	    timer.purge();
+	    
 	}else{ 
 	    /* name server fault.
 	       Possible naming failures are handled by a bully election mechanism by which at the end a new name server is elected. 
 	       Since election requires to elect a new physical node where run a new name server, the local process does not handle the election, but simply signals to its network infrastructure to start it. */
 
-	    System.out.printf("NAME SERVER FAULT%n");
+	    System.out.printf("[NetworkStack]: name server fault! starting election of new name server...\n");
 	    
 	    String BULLYREQUESTmessage = MessageForgery.forgeBULLYREQUEST();
 	    this.sendMessage(BULLYREQUESTmessage);
+
+	    // waiting system to be recovered
+	    lock.lock();
+	    try {
+		namingLock.await();
+	    }finally{
+		lock.unlock();
+	    }
+	    
 	}
     }
 

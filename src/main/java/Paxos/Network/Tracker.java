@@ -10,6 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
 
+import java.net.Inet4Address;
+
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.Json;
 
@@ -42,6 +44,93 @@ class Ticket{
     } 
 }
 
+enum TicketType{    
+    NAMING("NAMING", (o) -> {
+	    Ticket t = (Ticket) o[0];
+	    Entry<Long, CopyOnWriteArrayList<Ticket>> entry = (Entry<Long, CopyOnWriteArrayList<Ticket>>) o[1];
+	    System.out.printf("[Tracker]: No response received from the naming server, considered it death.\n");
+
+	    // removing association with naming service
+	    SocketRegistry.getInstance().getNamingSocket().close();
+	    SocketRegistry.getInstance().setNamingSocket(null);
+	    
+	    // remove any ticket associated with it
+	    Tracker.getInstance().getTrackingList().remove(entry.getKey());
+				    
+	    // if something was wrong in the naming request, the client is still waiting for a response. Unlock it
+	    String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, "NAMEFAULT");
+	    t.socket.sendOut(SIGUNLOCKmessage);
+	    // now is responsability of the processes to perform the election...
+	}),
+    ELECT("ELECT", (o) -> {
+	    if(SocketRegistry.getInstance().getNamingSocket() == null){ // only if there is NOT an already running name server
+		System.out.printf("[Tracker]: No BULLYSUPPRESS message received. Broadcasting this node is the new name server%n");
+		System.out.printf("[Tracker]: Starting new name server%n");
+
+		try{
+		    // reallow all traffic
+		    TrafficHandler.getInstance().allowAll();
+					
+		    NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, SocketRegistry.getInstance().getMachineUUID());
+		    Thread namingThread = new Thread(namingHandler);
+		    namingThread.start();
+
+		    namingHandler.recoverProcessList();
+
+		    // Sending COORD message
+		    namingHandler.sendCOORD();
+					
+		    Tracker.getInstance().removeTicket("ELECT");
+		}catch(Exception e){
+		    return;
+	    }
+	    }
+	}),
+    PING("PING", (o) -> {
+	    Entry<Long, CopyOnWriteArrayList<Ticket>> entry = (Entry<Long, CopyOnWriteArrayList<Ticket>>) o[1];
+	    System.out.printf("[Tracker]: I was not able to receive any response from "+entry.getKey()+". Removing any reference to it.%n");
+
+	    // removing the association from socket registry
+	    SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
+	    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+	    SocketRegistry.getInstance().getLocalUUID().remove(entry.getKey());
+
+	    // remove any ticket associated with it
+	    Tracker.getInstance().getTrackingList().remove(entry.getKey());	    
+	}),
+    DISCOVER("DISCOVER", (o) -> {
+	    Ticket t = (Ticket) o[0];
+	    Entry<Long, CopyOnWriteArrayList<Ticket>> entry = (Entry<Long, CopyOnWriteArrayList<Ticket>>) o[1];
+	    
+	    Tracker.getInstance().removeTicket("DISCOVER");
+	    
+	    // if something was wrong in the naming request, the client is still waiting for a response. Unlock it
+	    String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.UNICAST, "NAMEFAULT");
+	    MessageType.forwardTo(t.socket, SIGUNLOCKmessage);
+	    
+	});
+    
+    private String ticketType;
+    private CustomMessageLogic ticketLogic;
+    
+    private TicketType(String ticketType, CustomMessageLogic rule){
+	this.ticketType = ticketType;
+	this.ticketLogic = rule;
+    }
+
+    public String toString(){
+	return this.ticketType;
+    }
+
+    public void applyLogic(Object... args){
+	this.ticketLogic.applyLogic(args);
+    }
+
+    public boolean match(Ticket t){
+	return t.ticketType.equals(this.ticketType);
+    }
+}
+
 class Tracker{
 
     private ConcurrentHashMap<Long, CopyOnWriteArrayList<Ticket>> trackingList;
@@ -65,35 +154,9 @@ class Tracker{
 		    for(Entry<Long, CopyOnWriteArrayList<Ticket>> entry : trackingList.entrySet()){
 			for(Ticket t : entry.getValue()){
 			    if(Tracker.getInstance().isExpired(t)){
-				if(t.ticketType.equals(MessageType.PING.toString())){
-				    System.out.printf("[Tracker]: I was not able to receive any response from "+entry.getKey()+". Removing any reference to it.%n");
-
-				    // removing the association from socket registry
-				    SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
-				    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
-				    SocketRegistry.getInstance().getLocalUUID().remove(entry.getKey());
-
-				    // remove any ticket associated with it
-				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
-				}
-				// no response received from the naming server, considered it death. Start election of new naming server
-				if(t.ticketType.equals(MessageType.NAMINGREQUEST.toString())){ 
-				    System.out.printf("[Tracker]: No response received from the naming server, considered it death.");
-
-				    // removing association with naming service
-				    SocketRegistry.getInstance().getNamingSocket().close();
-
-				    // remove any ticket associated with it
-				    Tracker.getInstance().getTrackingList().remove(entry.getKey());
-				    
-				    // if something was wrong in the naming request, the client is still waiting for a response. Unlock it
-				    String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.UNICAST, "NAMEFAULT");
-				    t.socket.sendOut(SIGUNLOCKmessage);
-				    // now is responsability of the processes to perform the election...
-				}
-				// if this expires, no one have sent me a BULLYSUPPRESS, then I'll be the new name server
-				if(t.ticketType.equals(MessageType.ELECT.toString())){
-				    
+				for(TicketType ticketType : TicketType.values()){
+				    if(ticketType.match(t))
+					ticketType.applyLogic(t, entry);
 				}
 			    }
 			}
@@ -112,7 +175,7 @@ class Tracker{
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
 			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry, 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString(), null);
+			Tracker.getInstance().issueTicket(entry, 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString(), null);
 			// send the message
 			SocketRegistry.getInstance().getRegistry().get(entry).sendOut(PINGmessage);
 		    }
@@ -177,27 +240,33 @@ class Tracker{
 	Long currentTime = currentTimestamp.getTime();
         return (currentTime - ticket.timestamp) > ticket.expirationThreshold; 
     }
-
-    public void removeTicket(Long UUID, Long ticketUUID){
+    
+    public void removeTicket(Long UUID, Long ticketUUID, String ticketType){
 	// identify the ticket
 	Ticket ticket = null;
 	for(Ticket t : this.trackingList.get(UUID)){
-	    if(t.UUID.equals(ticketUUID)){
-		ticket = t;
-		this.trackingList.get(UUID).remove(t);
-		break;
+		
+	    if (ticketUUID == null){ // remove any ticket of this type
+		if(t.ticketType.equals(ticketType))
+		    this.trackingList.get(UUID).remove(t);
+	    }else{
+		if(t.UUID.equals(ticketUUID)){
+		    ticket = t;
+		    this.trackingList.get(UUID).remove(t);
+		    break;
+		}
 	    }
 	}
 	
 	// remove any ticket still present having a timestamp older than this one    
 	for(Ticket t : this.trackingList.get(UUID)){
-	    if(t.timestamp < ticket.timestamp){
+	    if(t.timestamp < ticket.timestamp && t.ticketType.equals(ticketType)){
 		this.trackingList.get(UUID).remove(t);
 	    }
 	}
     }
 
-     public void removeTicket(String nodeUUID, Long ticketUUID){
+    public void removeTicket(String nodeUUID, Long ticketUUID, String ticketType){
 	 // identify the ticket
 	 Ticket ticket = null;
 	 for(Ticket t : this.nodeList.get(nodeUUID)){
@@ -210,19 +279,30 @@ class Tracker{
 
 	 // remove any ticket still present having a timestamp older than this one
 	 for(Ticket t : this.nodeList.get(nodeUUID)){
-	     if(t.timestamp < ticket.timestamp){
+	     if(t.timestamp < ticket.timestamp && t.ticketType.equals(ticketType)){
 		 this.nodeList.get(nodeUUID).remove(t);
 	     }
 	 }
     }
 
     // remove ticket on the base of its type
-    public void removeTicket(Long UUID, String ticketType){
-	for(Ticket t : this.trackingList.get(UUID)){
-	    if(t.ticketType.equals(ticketType)){
-		this.trackingList.get(UUID).remove(t);
+    public void removeTicket(String ticketType){
+	for(Entry<Long, CopyOnWriteArrayList<Ticket>> entry : trackingList.entrySet()){	
+	    for(Ticket t : this.trackingList.get(entry.getKey())){
+		if(t.ticketType.equals(ticketType)){
+		    this.trackingList.get(entry.getKey()).remove(t);
+		}
 	    }
 	}
+
+	for(Entry<String, CopyOnWriteArrayList<Ticket>> entry : nodeList.entrySet()){	
+	    for(Ticket t : this.nodeList.get(entry.getKey())){
+		if(t.ticketType.equals(ticketType)){
+		    this.nodeList.get(entry.getKey()).remove(t);
+		}
+	    }
+	}
+	
     }
 
     

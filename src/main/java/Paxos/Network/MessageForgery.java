@@ -127,11 +127,8 @@ class MessageForgery{
 
 	if(sigType != null)
 	    Jmessage.add(MessageField.SIGTYPE.toString(), sigType);
-	
-	if(forward.equals(ForwardType.BROADCAST)) // broadcast transmission
-	    Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
-	else
-	    Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
+        
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), forward.toString());
 	return Jmessage.toString();
     }
 
@@ -153,5 +150,15 @@ class MessageForgery{
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYSUPPRESS.toString());
 	return Jmessage.toString();
     }
+
+    public static String forgeCOORD(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.COORD.toString());
+
+	// always sent in broadcast
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+	return Jmessage.toString();
+    }
+
     
 }

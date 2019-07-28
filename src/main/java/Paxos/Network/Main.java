@@ -36,7 +36,7 @@ class Main{
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
 
 		// give time to network infrastructure to go up
-		Thread.sleep(500);
+		Thread.sleep(200);
 		
 		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, UUID);
 		Thread namingThread = new Thread(namingHandler);
