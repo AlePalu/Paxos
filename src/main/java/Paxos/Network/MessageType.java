@@ -509,6 +509,14 @@ public enum MessageType implements TrafficRule{
 			 
 			 TrafficHandler.getInstance().setWhiteList(allowedTraffic);			 
 		     }),
+	WHEREISNAMING("WHEREISNAMING",
+		      (s,m) -> {
+
+		      }),
+	NAMINGAT("NAMINGAT",
+		 (s,m) -> {
+
+		 }),
 	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
         PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),
