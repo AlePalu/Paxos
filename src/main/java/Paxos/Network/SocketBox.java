@@ -17,6 +17,9 @@ public class SocketBox{
 
     private BufferedReader socketInputStream;
     private BufferedWriter socketOutputStream;
+
+    private long machineUUID;
+    private long remoteMachineUUID;
     
     public SocketBox(Socket socket) throws IOException{
 	this.socket = socket;
@@ -44,9 +47,10 @@ public class SocketBox{
 	    if (Jmessage.get(MessageField.NAME.toString()) == null) // if a name field is already present, don't append a new one (this cause problems with name server)
 		outboundJSONMessage.add(MessageField.NAME.toString(), Inet4Address.getLocalHost().getHostAddress());
 
-	   // if(!Jmessage.get(MessageField.MSGTYPE.toString()).asString().equals(MessageType.PING.toString()))
-		//System.out.printf(message+"%n");
-	    
+	    // automatically add the unique identifier of the machine, required for fault tolerance
+	    if(this.machineUUID != 0 && (Jmessage.get(MessageField.MACHINEUUID.toString()) == null || Jmessage.get(MessageField.MACHINEUUID.toString()).asLong() == 0))
+		outboundJSONMessage.add(MessageField.MACHINEUUID.toString(), this.machineUUID);
+
 	    // send the message
 	    this.socketOutputStream.write(outboundJSONMessage.toString());
 	    this.socketOutputStream.newLine();
@@ -63,5 +67,21 @@ public class SocketBox{
 	    e.printStackTrace();
 	    return;
 	}
+    }
+
+    public void setUUID(long machineUUID){
+	this.machineUUID = machineUUID;
+    }
+
+    public long getUUID(){
+	return this.machineUUID;
+    }
+
+    public void setRemoteUUID(long remoteMachineUUID){
+	this.remoteMachineUUID = remoteMachineUUID;
+    }
+
+    public long getRemoteUUID(){
+	return this.remoteMachineUUID;
     }
 }

@@ -15,7 +15,10 @@ enum MessageField{
     VALUE("VALUE"),
     NODELIST("NODELIST"),
     TICKET("TICKET"),
-	ROUND("ROUND");
+    MACHINEUUID("MACHINEUUID"),
+    SIGTYPE("SIGTYPE"),
+    
+    ROUND("ROUND");
     
     private String name;
     
@@ -86,18 +89,19 @@ class MessageForgery{
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGREPLY(JsonArray nodeList, Long recipientID, String name){
+    public static String forgeNAMINGREPLY(JsonArray nodeList, Long recipientID, String name, Long ticket){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGREPLY.toString());
 	Jmessage.add(MessageField.NODELIST.toString(), nodeList);
 	if(recipientID != null)
 	    Jmessage.add(MessageField.RECIPIENTID.toString(), recipientID);
 	Jmessage.add(MessageField.NAME.toString(), name);
+	Jmessage.add(MessageField.TICKET.toString(), ticket);
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGREPLY(JsonArray nodeList, String name){
-	return forgeNAMINGREPLY(nodeList, null, name);
+    public static String forgeNAMINGREPLY(JsonArray nodeList, String name, Long ticket){
+	return forgeNAMINGREPLY(nodeList, null, name, ticket);
     }
 
     public static String forgePING(Long recipientID){
@@ -117,13 +121,51 @@ class MessageForgery{
 	return forgePING(null);
     }
 
-    public static String forgeDISCOVERKILL(){
+    public static String forgeSIGUNLOCK(ForwardType forward, String sigType){
 	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.DISCOVERKILL.toString());
-	
-	// this message is sent in broadcast
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.SIGUNLOCK.toString());
+
+	if(sigType != null)
+	    Jmessage.add(MessageField.SIGTYPE.toString(), sigType);
+        
+	Jmessage.add(MessageField.FORWARDTYPE.toString(), forward.toString());
+	return Jmessage.toString();
+    }
+
+    
+    public static String forgeBULLYREQUEST(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYREQUEST.toString());
+	return Jmessage.toString();
+    }
+
+    public static String forgeELECT(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.ELECT.toString());
+	return Jmessage.toString();
+    }
+
+    public static String forgeBULLYSUPPRESS(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYSUPPRESS.toString());
+	return Jmessage.toString();
+    }
+
+    public static String forgeCOORD(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.COORD.toString());
+
+	// always sent in broadcast
 	Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
 	return Jmessage.toString();
     }
 
+
+    public static String forgeWHEREISNAMING(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYSUPPRESS.toString());
+	return Jmessage.toString();
+    }
+
+    
 }

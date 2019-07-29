@@ -2,11 +2,41 @@ package Paxos.Network;
 
 import java.net.Inet4Address;
 import java.net.Socket;
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
+
+import java.util.UUID;
 
 class Main{
 
-    public static void main(String[] args) {
+    public static void namingDiscovery(){
+	try{
+	    // send in broadcast a WHEREISNAMING message, wait for a response...
+	    String WHEREISNAMINGmessage = MessageForgery.forgeWHEREISNAMING();
 
+	    // open datagram socket
+	    DatagramSocket socket = new DatagramSocket();
+	    socket.setBroadcast(true);
+
+	    InetAddress group = InetAddress.getByName("192.168.1.255");
+	    DatagramPacket packet = new DatagramPacket(WHEREISNAMINGmessage.getBytes(), WHEREISNAMINGmessage.length(), group, 40000);
+	    socket.send(packet);
+	    socket.close();
+	}catch(Exception e){
+	    e.printStackTrace();
+	    return;
+	}
+    }
+    
+    public static void main(String[] args) {
+	
 	if(args.length == 0){
 	    System.out.printf("[Main]: No naming node IP inserted. Aborting.%n");
 	    return;
@@ -15,7 +45,14 @@ class Main{
 	String namingNodeIP = args[0];
 	
 	System.out.printf("[Main]: started\n");
-	System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");
+
+	UUID randomUUID = UUID.randomUUID();
+	long UUID = randomUUID.getMostSignificantBits() & Long.MAX_VALUE;
+	
+	System.out.printf("[Main]: machine UUID: "+UUID+"\n");
+	SocketRegistry.getInstance().setMachineUUID(UUID);
+	
+	System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");	
 	
 	try{
 	    ConnectionHandler connectionHandler = new ConnectionHandler(40000);
@@ -27,9 +64,9 @@ class Main{
 		System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
 
 		// give time to network infrastructure to go up
-		Thread.sleep(1000);
+		Thread.sleep(200);
 		
-		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000);
+		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, UUID);
 		Thread namingThread = new Thread(namingHandler);
 		namingThread.start();
 	    }else{
@@ -37,6 +74,7 @@ class Main{
 		// open connection with naming service node
 		Socket namingSocket = new Socket(namingNodeIP, 40000);
 		SocketBox namingSocketBox = new SocketBox(namingSocket);
+		namingSocketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 		SocketRegistry.getInstance().setNamingSocket(namingSocketBox);
 
 		String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());

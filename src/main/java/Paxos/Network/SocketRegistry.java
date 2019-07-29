@@ -22,6 +22,8 @@ class SocketRegistry{
     private ArrayList<String> remoteNodeList;
     
     private SocketBox namingSocket;
+
+    private long machineUUID;
     
     private SocketRegistry(){
 	this.registry = new ConcurrentHashMap<Long, SocketBox>();
@@ -46,8 +48,8 @@ class SocketRegistry{
 
     public ConcurrentHashMap<String, SocketBox> getRemoteNodeRegistry(){
 	return this.remoteNodeRegistry;
-    }
-
+    }    
+    
     public ArrayList<String> getRemoteNodeList(){
 	return this.remoteNodeList;
     }
@@ -85,6 +87,14 @@ class SocketRegistry{
 	}
 	else
 	    throw new IllegalStateException();
+    }
+
+    public void setMachineUUID(long machineUUID){
+	this.machineUUID = machineUUID;
+    }
+
+    public long getMachineUUID(){
+	return this.machineUUID;
     }
     
 }

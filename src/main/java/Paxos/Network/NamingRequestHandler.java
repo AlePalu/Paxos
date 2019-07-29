@@ -16,6 +16,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonValue;
+import com.eclipsesource.json.JsonArray;
+
 
 public class NamingRequestHandler implements Runnable{
 
@@ -24,8 +27,7 @@ public class NamingRequestHandler implements Runnable{
     HashSet<MessageType> messageToProcess;
     Timer timer;
 
-    
-    public NamingRequestHandler(String ip, int port){
+    public NamingRequestHandler(String ip, int port, long UUID){
 	this.nodesOnNetworkFile = new File("processList.txt");
 	
 	try{
@@ -35,6 +37,7 @@ public class NamingRequestHandler implements Runnable{
 	    
 	    Socket connSocket = new Socket(ip, port); // connecting to NetworkInfrastructure
 	    this.socketBox = new SocketBox(connSocket);
+	    this.socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 
 	    // subscribe the naming service to the local network infrastucture
 	    String NAMINGSUBSCRIBEmessage = MessageForgery.forgeNAMINGSUBSCRIBE();
@@ -42,7 +45,7 @@ public class NamingRequestHandler implements Runnable{
 
 	    // insert the IP of the machine where naming service is running in the available nodes
 	    String myIP = Inet4Address.getLocalHost().getHostAddress();
-	    recordName(myIP);
+	    recordName(myIP, SocketRegistry.getInstance().getMachineUUID());
 
 	    // populate the set with messages name server has to process
 	    messageToProcess = new HashSet<MessageType>();
@@ -67,7 +70,7 @@ public class NamingRequestHandler implements Runnable{
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
 			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), MessageType.PING.toString());
+			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString());
 
 			entry.getValue().sendOut(PINGmessage);
 		    }		    
@@ -87,9 +90,9 @@ public class NamingRequestHandler implements Runnable{
 				// remove any ticket associated with it
 				Tracker.getInstance().getNamingTickets().remove(entry.getKey());
 				
-				// send a DISCOVERKILL in broadcast
-				String DISCOVERKILLmessage = MessageForgery.forgeDISCOVERKILL();
-				getSocketBox().sendOut(DISCOVERKILLmessage);
+				// send a SIGUNLOCK in broadcast
+				String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, null);
+				getSocketBox().sendOut(SIGUNLOCKmessage);
 			    }
 			}
 		    }
@@ -127,7 +130,7 @@ public class NamingRequestHandler implements Runnable{
 	return this.socketBox;
     }
     
-    public void recordName(String name){
+    public void recordName(String name, long machineUUID){
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
@@ -139,7 +142,8 @@ public class NamingRequestHandler implements Runnable{
 	    return;
 	}
 	try(FileWriter fileWriter = new FileWriter(this.nodesOnNetworkFile, true)){
-	    String in = name+"\n";
+	    Long UUID = new Long(machineUUID);
+	    String in = name+","+UUID.toString()+"\n";
 	    fileWriter.write(in);
 	    fileWriter.flush();
         }catch(Exception e){
@@ -153,7 +157,8 @@ public class NamingRequestHandler implements Runnable{
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
-		if(!ip.equals(name))
+		String[] ipField = ip.split(",");
+		if(!ipField[0].equals(name))
 		    tmp.add(ip);
 
 		ip = reader.readLine();
@@ -169,5 +174,40 @@ public class NamingRequestHandler implements Runnable{
 	}catch(Exception e){
 	    return;
 	}
+    }
+
+    public void sendCOORD(){
+	String COORDmessage = MessageForgery.forgeCOORD();
+	MessageType.forwardTo(this.socketBox, COORDmessage);
+	System.out.printf("[NamingRequestHandler]: Broadcasted name server is here%n");
+    }
+
+    public void recoverProcessList(){
+	// read recovery file
+	File recoveryFile = new File("lastProcessStatus.txt");
+
+	try(BufferedReader reader = new BufferedReader(new FileReader(recoveryFile))){	    
+	    // clear previously existent file
+	    this.nodesOnNetworkFile.delete();
+	    this.nodesOnNetworkFile.createNewFile();
+
+	    String procList = reader.readLine();
+	    JsonArray procArray = Json.parse(procList).asArray();
+	    for(JsonValue entry : procArray){
+		JsonObject entryObj = entry.asObject();
+		String name = entryObj.get("IP").asString();
+		Long UUID = new Long(entryObj.get("UUID").asString());
+
+		recordName(name, UUID);
+	    }
+		
+	}catch(Exception e){
+	    e.printStackTrace();
+	    return;
+	}
+
+	
+	System.out.printf("[NamingRequestHandler]: recovered process list according to last NAMINGREPLY received.%n");
+
     }
 }
