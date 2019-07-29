@@ -464,7 +464,6 @@ public enum MessageType implements TrafficRule{
 		      for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
 			  if(remoteSocket.getValue().getRemoteUUID() > SocketRegistry.getInstance().getMachineUUID()){
 			      remoteSocket.getValue().sendOut(ELECTmessage);
-			      System.out.printf(ELECTmessage+"%n");
 			  }
 		      }
 
