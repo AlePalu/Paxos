@@ -160,5 +160,12 @@ class MessageForgery{
 	return Jmessage.toString();
     }
 
+
+    public static String forgeWHEREISNAMING(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYSUPPRESS.toString());
+	return Jmessage.toString();
+    }
+
     
 }

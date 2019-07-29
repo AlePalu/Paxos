@@ -2,11 +2,39 @@ package Paxos.Network;
 
 import java.net.Inet4Address;
 import java.net.Socket;
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
 
 import java.util.UUID;
 
 class Main{
 
+    public static void namingDiscovery(){
+	try{
+	    // send in broadcast a WHEREISNAMING message, wait for a response...
+	    String WHEREISNAMINGmessage = MessageForgery.forgeWHEREISNAMING();
+
+	    // open datagram socket
+	    DatagramSocket socket = new DatagramSocket();
+	    socket.setBroadcast(true);
+
+	    InetAddress group = InetAddress.getByName("192.168.1.255");
+	    DatagramPacket packet = new DatagramPacket(WHEREISNAMINGmessage.getBytes(), WHEREISNAMINGmessage.length(), group, 40000);
+	    socket.send(packet);
+	    socket.close();
+	}catch(Exception e){
+	    e.printStackTrace();
+	    return;
+	}
+    }
+    
     public static void main(String[] args) {
 	
 	if(args.length == 0){

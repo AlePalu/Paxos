@@ -51,7 +51,8 @@ enum TicketType{
 	    System.out.printf("[Tracker]: No response received from the naming server, considered it death.\n");
 
 	    // removing association with naming service
-	    SocketRegistry.getInstance().getNamingSocket().close();
+	    if(SocketRegistry.getInstance().getNamingSocket() != null)
+		SocketRegistry.getInstance().getNamingSocket().close();
 	    SocketRegistry.getInstance().setNamingSocket(null);
 	    
 	    // remove any ticket associated with it

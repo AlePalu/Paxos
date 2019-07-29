@@ -397,10 +397,9 @@ public enum MessageType implements TrafficRule{
 			 // there was a name fault??
 			 if(Jmessage.get(MessageField.SIGTYPE.toString()) != null){
 			     String sigType = Jmessage.get(MessageField.SIGTYPE.toString()).asString();
-			     if(sigType.equals("NAMEFAULT"))
+			     if(sigType.equals("NAMEFAULT")){
 				 process.nameFault = true;
-			     if(sigType.equals("NAMEUP"))
-				 process.nameFault = false;
+			     }
 			 }
 			 
 			 // simply nullify any pending discover by unlocking the process
@@ -438,35 +437,49 @@ public enum MessageType implements TrafficRule{
 		  process.lock.unlock();		  
 	      }),
 	ELECT("ELECT",
-		     (s,m) -> {
-			 JsonObject Jmessage = Json.parse(m).asObject();
-			 // get UUID of the sender
-			 long senderMachineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
-			 // if my UUID is greater than the sender UUID, suppress its election
-			 if(SocketRegistry.getInstance().getMachineUUID() > senderMachineUUID){
-			     String BULLYSUPPRESSmessage = MessageForgery.forgeBULLYSUPPRESS();
-			     s.sendOut(BULLYSUPPRESSmessage);
+	      (s,m) -> {
+		  // on reception of an ELECT, someone has discovered name server has crashed.
+		  // If no process of mine have issued a BULLYREQUEST, I still keep the old naming reference, and this could cause issue in the election mechanism, rmeove it
+		  try{
+		      SocketRegistry.getInstance().getNamingSocket().close();
+		      SocketRegistry.getInstance().setNamingSocket(null);
+		  }catch(NullPointerException e){
+		      // reference already removed, no need to worry
+		  }
+		  
+		  JsonObject Jmessage = Json.parse(m).asObject();
+		  // get UUID of the sender
+		  long senderMachineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
+		  // if my UUID is greater than the sender UUID, suppress its election
+		  if(SocketRegistry.getInstance().getMachineUUID() > senderMachineUUID){
+		      String BULLYSUPPRESSmessage = MessageForgery.forgeBULLYSUPPRESS();
+		      s.sendOut(BULLYSUPPRESSmessage);
 
-			     Random rng = new Random();
-			     Long randomNumber = Math.abs(rng.nextLong());
-			     Tracker.getInstance().issueTicket(SocketRegistry.getInstance().getMachineUUID(), 5000, randomNumber, TicketType.ELECT.toString(), s);
+		      Random rng = new Random();
+		      Long randomNumber = Math.abs(rng.nextLong());
+		      Tracker.getInstance().issueTicket(SocketRegistry.getInstance().getMachineUUID(), 5000, randomNumber, TicketType.ELECT.toString(), s);
 			     
-			     // start a new election, sending an ELECT to all nodes having UUID greater than mine
-			     String ELECTmessage = MessageForgery.forgeELECT();
-			     for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
-				 if(remoteSocket.getValue().getUUID() > SocketRegistry.getInstance().getMachineUUID()){
-				     remoteSocket.getValue().sendOut(ELECTmessage);
-				 }
-			     }
+		      // start a new election, sending an ELECT to all nodes having UUID greater than mine
+		      String ELECTmessage = MessageForgery.forgeELECT();
+		      for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
+			  if(remoteSocket.getValue().getRemoteUUID() > SocketRegistry.getInstance().getMachineUUID()){
+			      remoteSocket.getValue().sendOut(ELECTmessage);
+			      System.out.printf(ELECTmessage+"%n");
+			  }
+		      }
 
-			     ArrayList<String> allowedTraffic = new ArrayList<String>();
-			     allowedTraffic.add("ELECT");
-			     allowedTraffic.add("BULLYSUPPRESS");
-			     allowedTraffic.add("COORD");
+		      ArrayList<String> allowedTraffic = new ArrayList<String>();
+		      allowedTraffic.add("ELECT");
+		      allowedTraffic.add("BULLYSUPPRESS");
+		      allowedTraffic.add("COORD");
 
-			     TrafficHandler.getInstance().setWhiteList(allowedTraffic);
-			 } 
-		     }),
+		      TrafficHandler.getInstance().setWhiteList(allowedTraffic);
+		  } 
+	      }, (o) -> {
+		  // inform local process of the name fault, in case in this node still no on process has discovered it.
+		  LocalNetworkProcess process = (LocalNetworkProcess) o[0];
+		  process.nameFault = true;
+	      }),
 	BULLYSUPPRESS("BULLYSUPPRESS",
 		      (s,m) -> {
 			  // I will not be the new leader, remove any ELECT token

@@ -140,12 +140,32 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
        	this.sendMessage(NAMINGREQUESTmessage);
 
 	// wait for naming processing...
+	
+	// set up a sentinel to eventually unlock the process in case of race conditions
+	this.timer = new Timer();
+	try{
+	    timer.scheduleAtFixedRate(new TimerTask(){
+		    public void run(){
+			if(nameFault){
+			    lock.lock();
+			    namingLock.signalAll();
+			    lock.unlock();
+			}
+		    }
+	    },1000,1000);
+	}catch(Exception e){
+	    // timer was already canceled when delay elapsed, simply ignore this exception
+	}
 	lock.lock();
 	try {
 	    namingLock.await();
 	}finally{
 	    lock.unlock();
 	}
+
+	// delete the timer
+	timer.cancel();
+	timer.purge();
 	
         if(!nameFault){
 	    System.out.printf("[NetworkStack]: discovering currently connected processes on network...\n");
@@ -156,17 +176,31 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	    this.sendMessage(DISCOVERREQUESTmessage);
 
 	    // waiting for processes discovering...
-
+	    // set up a sentinel to eventually unlock the process in case of race conditions
 	    this.timer = new Timer();
-
-	    timer.schedule(new TimerTask(){
-		    // if after 10 seconds, no response for a DISCOVER, repeat the request (maybe system has got stucked for some name failure)
-		    public void run(){
-			lock.lock();
-			discoverMessageLock.signalAll();
-			lock.unlock();
-		    }
-		},10000);
+	    try{
+		timer.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+			    if(nameFault){
+				lock.lock();
+				discoverMessageLock.signalAll();
+				lock.unlock();
+			    }
+			}
+		    },1000,1000);
+		// what to do in the unlucky case where no process has discovered name server was death??
+		timer.schedule(new TimerTask(){
+			public void run(){
+			    lock.lock();
+			    // unlock the process
+			    discoverMessageLock.signalAll();
+			    lock.unlock();
+			    System.out.printf("[NetworkStack]: got stucked while discovering processes, maybe something was wrong...%n");
+			}
+		    }, 7000);
+	    }catch(Exception e){
+		// timer was already canceled when delay elapsed, simply ignore this exception
+	    }
 	    
 	    lock.lock();
 	    try{
@@ -175,10 +209,11 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		lock.unlock();
 	    }
 
+	    // delete the timer
 	    timer.cancel();
 	    timer.purge();
-	    
-	}else{ 
+	}
+	if(nameFault){
 	    /* name server fault.
 	       Possible naming failures are handled by a bully election mechanism by which at the end a new name server is elected. 
 	       Since election requires to elect a new physical node where run a new name server, the local process does not handle the election, but simply signals to its network infrastructure to start it. */
