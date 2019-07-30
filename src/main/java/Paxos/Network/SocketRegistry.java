@@ -22,7 +22,8 @@ class SocketRegistry{
     private ArrayList<String> remoteNodeList;
     
     private SocketBox namingSocket;
-
+    private SocketBox proberSocket;
+    
     private long machineUUID;
     
     private SocketRegistry(){
@@ -75,6 +76,15 @@ class SocketRegistry{
 
     public SocketBox getNamingSocket(){
 	return this.namingSocket;
+    }
+
+    
+    public void setProberSocket(SocketBox proberSocket){
+	this.proberSocket = proberSocket;
+    }
+
+    public SocketBox getProberSocket(){
+	return this.proberSocket;
     }
     
     public void addElement(Long processUUID, SocketBox socketBox) throws IllegalStateException{

@@ -109,6 +109,18 @@ enum TicketType{
 	    String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.UNICAST, "NAMEFAULT");
 	    MessageType.forwardTo(t.socket, SIGUNLOCKmessage);
 	    
+	}),
+    NAMINGDISCOVER("NAMINGDISCOVER", (o) -> {
+	    // start naming service
+	    try{
+		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, SocketRegistry.getInstance().getMachineUUID());
+		Thread namingThread = new Thread(namingHandler);
+		namingThread.start();
+	    }catch(Exception e){
+		e.printStackTrace();
+	    }
+	    // remove any pending ticket (if any)
+	    Tracker.getInstance().removeTicket(NameProber.getInstance().getUUID(), null, "NAMINGDISCOVER");
 	});
     
     private String ticketType;
