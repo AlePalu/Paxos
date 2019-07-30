@@ -8,6 +8,7 @@ import com.eclipsesource.json.JsonValue;
 import java.util.Map.Entry;
 import java.net.Inet4Address;
 import java.net.Socket;
+import java.net.DatagramPacket;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -464,7 +465,6 @@ public enum MessageType implements TrafficRule{
 		      for(Entry<String, SocketBox> remoteSocket : SocketRegistry.getInstance().getRemoteNodeRegistry().entrySet()){
 			  if(remoteSocket.getValue().getRemoteUUID() > SocketRegistry.getInstance().getMachineUUID()){
 			      remoteSocket.getValue().sendOut(ELECTmessage);
-			      System.out.printf(ELECTmessage+"%n");
 			  }
 		      }
 
@@ -510,6 +510,65 @@ public enum MessageType implements TrafficRule{
 			 
 			 TrafficHandler.getInstance().setWhiteList(allowedTraffic);			 
 		     }),
+	WHEREISNAMING("WHEREISNAMING",
+		      (s,m) -> {
+			  JsonObject Jmessage = Json.parse(m).asObject();
+			  // issue a ticket to track the naming discover. If ticket expires, I'm the only active node, then I'm the name server.
+			  Random rng = new Random();
+			  Long ticketUUID = Math.abs(rng.nextLong());
+			  long senderID = Jmessage.get("SENDERID").asLong();
+			  Tracker.getInstance().issueTicket(senderID, 1000, ticketUUID, TicketType.NAMINGDISCOVER.toString(), null);
+		      },
+		      (o) -> {
+			  DatagramPacket packet = (DatagramPacket)o[0];
+
+	        	  if(SocketRegistry.getInstance().getNamingSocket() != null){ // I know where the naming node is
+			      NameProber.getInstance().namingProbeResponse(packet);
+			  }
+		      }),
+	NAMINGAT("NAMINGAT",
+		 (s,m) -> {
+		     try{
+			 JsonObject Jmessage = Json.parse(m).asObject();
+			 String namingNodeIP = Jmessage.get(MessageField.NAMEIP.toString()).asString();
+
+			 // keeping track of the name server reference
+			 Socket namingSocket = new Socket(namingNodeIP, 40000);
+			 SocketBox namingSocketBox = new SocketBox(namingSocket);
+			 namingSocketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
+			 SocketRegistry.getInstance().setNamingSocket(namingSocketBox);
+		     
+			 System.out.printf("[NameProber]: name server at: "+namingNodeIP+"%n");
+
+			 // if naming running on remote node
+			 if(!Inet4Address.getLocalHost().getHostAddress().equals(namingNodeIP)){
+			     String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());
+			     SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage);
+			 }
+		     }catch(Exception e){
+
+		     }
+		 },
+		 (o) -> {
+		     if(SocketRegistry.getInstance().getNamingSocket() == null){
+			 try{
+			     // someone has ansered, then I won't be the name server
+			     Tracker.getInstance().removeTicket(NameProber.getInstance().getUUID(), null, TicketType.NAMINGDISCOVER.toString());
+			     
+			     DatagramPacket packet = (DatagramPacket)o[0];
+
+			     String decodedPacket = new String(packet.getData(), 0, packet.getLength());
+
+			     NameProber.getInstance().getSocketBox().sendOut(decodedPacket);
+			 }catch(Exception e){
+			     e.printStackTrace();
+			 }
+		     }
+		 }),
+	PROBERSUBSCRIBE("PROBERSUBSCRIBE",
+			(s,m) -> {
+			    SocketRegistry.getInstance().setProberSocket(s);			    
+			}),
 	
 	// paxos protocol related messages are simply forwarded to the correct process, no internal processing nor packet inspection is done by the network stack
         PREPAREREQUEST("PREPAREREQUEST", (s,m) -> MessageType.forwardTo(s,m)),

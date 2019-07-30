@@ -17,6 +17,7 @@ enum MessageField{
     TICKET("TICKET"),
     MACHINEUUID("MACHINEUUID"),
     SIGTYPE("SIGTYPE"),
+    NAMEIP("NAMEIP"),
     
     ROUND("ROUND");
     
@@ -161,11 +162,24 @@ class MessageForgery{
     }
 
 
-    public static String forgeWHEREISNAMING(){
+    public static String forgeWHEREISNAMING(Long UUID){
 	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.BULLYSUPPRESS.toString());
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.WHEREISNAMING.toString());
+	Jmessage.add(MessageField.SENDERID.toString(), UUID);
 	return Jmessage.toString();
     }
 
+    public static String forgeNAMINGAT(String nameIP){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGAT.toString());
+	Jmessage.add(MessageField.NAMEIP.toString(), nameIP);
+	return Jmessage.toString();
+    }
+
+    public static String forgePROBERSUBSCRIBE(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PROBERSUBSCRIBE.toString());
+	return Jmessage.toString();
+    }
     
 }
