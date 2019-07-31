@@ -552,19 +552,34 @@ public enum MessageType implements TrafficRule{
 		 (o) -> {
 		     if(SocketRegistry.getInstance().getNamingSocket() == null){
 			 try{
-			     // someone has ansered, then I won't be the name server
+			     // someone has answered, then I won't be the name server
 			     Tracker.getInstance().removeTicket(NameProber.getInstance().getUUID(), null, TicketType.NAMINGDISCOVER.toString());
-			     
 			     DatagramPacket packet = (DatagramPacket)o[0];
-
 			     String decodedPacket = new String(packet.getData(), 0, packet.getLength());
-
 			     NameProber.getInstance().getSocketBox().sendOut(decodedPacket);
 			 }catch(Exception e){
 			     e.printStackTrace();
 			 }
 		     }
 		 }),
+	NAMEUP("NAMEUP",
+	       (s,m) -> {
+		   // this message is responsable to avoid the presence of two nodes both hosting the name server. This can happen if more nodes goes up
+		   // at more or less the same instant, in this case NameProber is not able to detect the others node are going to activate a name server, and viceversa.
+		   // We avoid the race condition by emitting in broadcast a NAMEUP message immediatley after the name server went up
+
+		   // remove any ELECT ticket, if there is any not elapsed yet (then name server has not been instantiated yet)
+		   Tracker.getInstance().removeTicket(TicketType.ELECT.toString());
+
+		   // if I have an already running name server. then NAMEUP message was arrived too late, and more than one name server is present in the network
+		   JsonObject Jmessage = Json.get(m).asObject();
+		   long senderMachineUUID = Jmessage.get(MessageField.MACHINEUUID.toString()).asLong();
+
+		   // if my machine UUID is less than the one of the sender, kill the name server I'm hosting
+		   if(SocketRegistry.getInstance().getMachineUUID() < senderMachineUUID){
+
+		   }
+	       }),
 	PROBERSUBSCRIBE("PROBERSUBSCRIBE",
 			(s,m) -> {
 			    SocketRegistry.getInstance().setProberSocket(s);			    

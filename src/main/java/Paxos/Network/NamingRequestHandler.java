@@ -26,7 +26,8 @@ public class NamingRequestHandler implements Runnable{
     SocketBox socketBox;
     HashSet<MessageType> messageToProcess;
     Timer timer;
-
+    boolean running;
+    
     public NamingRequestHandler(String ip, int port, long UUID){
 	this.nodesOnNetworkFile = new File("processList.txt");
 	
@@ -57,6 +58,8 @@ public class NamingRequestHandler implements Runnable{
 	    System.out.println("Error " + e.getMessage());
 	    e.printStackTrace();
 	}
+
+	this.running = true;
 	
 	System.out.printf("[NamingRequestHandler]: Naming server READY%n");
 
@@ -104,7 +107,7 @@ public class NamingRequestHandler implements Runnable{
     public void run(){
 	String message;
 	try{	    
-	    while(true){
+	    while(this.running){
 		if(this.socketBox.getInputStream().ready()){
 		    message = this.socketBox.getInputStream().readLine();
 
@@ -205,9 +208,12 @@ public class NamingRequestHandler implements Runnable{
 	    e.printStackTrace();
 	    return;
 	}
-
 	
 	System.out.printf("[NamingRequestHandler]: recovered process list according to last NAMINGREPLY received.%n");
 
+    }
+
+    public void stop(){
+	this.running = false;
     }
 }
