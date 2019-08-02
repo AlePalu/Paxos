@@ -32,12 +32,11 @@ class TrafficHandler implements Runnable{
 			// get the message from socket
 			message = socket.getInputStream().readLine();
 
-			//if(!Json.parse(message).asObject().get("MSGTYPE").asString().equals("PING"))
-			//	System.out.println("[IN] " +message);
-			
 			// apply traffic rule
 			for(MessageType msg : MessageType.values()){
 			    if(msg.match(message) && this.whiteList.contains(Json.parse(message).asObject().get(MessageField.MSGTYPE.toString()).asString())){
+				//if(Json.parse(message).asObject().get("MSGTYPE").asString().equals("PING"))
+				//System.out.println("[IN] " +message);
 				msg.applyRule(socket, message);
 				break;
 			    }

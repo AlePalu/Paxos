@@ -64,27 +64,23 @@ enum TicketType{
 	    // now is responsability of the processes to perform the election...
 	}),
     ELECT("ELECT", (o) -> {
-	    if(SocketRegistry.getInstance().getNamingSocket() == null){ // only if there is NOT an already running name server
-		System.out.printf("[Tracker]: No BULLYSUPPRESS message received. Broadcasting this node is the new name server%n");
-		System.out.printf("[Tracker]: Starting new name server%n");
+	    Tracker.getInstance().removeTicket("ELECT");
+	    System.out.printf("[Tracker]: No BULLYSUPPRESS message received. Broadcasting this node is the new name server%n");
+	    System.out.printf("[Tracker]: Starting new name server%n");
 
-		try{
-		    // reallow all traffic
-		    TrafficHandler.getInstance().allowAll();
+	    try{
+		// reallow all traffic
+		TrafficHandler.getInstance().allowAll();
 					
-		    NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, SocketRegistry.getInstance().getMachineUUID());
-		    Thread namingThread = new Thread(namingHandler);
-		    namingThread.start();
+		NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, SocketRegistry.getInstance().getMachineUUID());
+		namingHandler.recoverProcessList();
+		Thread namingThread = new Thread(namingHandler);
+		namingThread.start();
 
-		    namingHandler.recoverProcessList();
-
-		    // Sending COORD message
-		    namingHandler.sendCOORD();
-					
-		    Tracker.getInstance().removeTicket("ELECT");
-		}catch(Exception e){
-		    return;
-	    }
+		// Sending COORD message
+		namingHandler.sendCOORD();
+	    }catch(Exception e){
+		return;
 	    }
 	}),
     PING("PING", (o) -> {
@@ -92,8 +88,11 @@ enum TicketType{
 	    System.out.printf("[Tracker]: I was not able to receive any response from "+entry.getKey()+". Removing any reference to it.%n");
 
 	    // removing the association from socket registry
-	    SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
-	    SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+	    if(SocketRegistry.getInstance().getRegistry().get(entry.getKey()) != null){
+		SocketRegistry.getInstance().getRegistry().get(entry.getKey()).close();
+		SocketRegistry.getInstance().getRegistry().remove(entry.getKey());
+	    }
+
 	    SocketRegistry.getInstance().getLocalUUID().remove(entry.getKey());
 
 	    // remove any ticket associated with it
@@ -259,7 +258,7 @@ class Tracker{
 	Ticket ticket = null;
 	for(Ticket t : this.trackingList.get(UUID)){
 		
-	    if (ticketUUID == null){ // remove any ticket of this type
+	    if (ticketUUID == null){ // remove any ticket of this type for this UUID
 		if(t.ticketType.equals(ticketType))
 		    this.trackingList.get(UUID).remove(t);
 	    }else{
@@ -318,6 +317,46 @@ class Tracker{
 	
     }
 
+    // returns true if a ticket with such ID exists
+    public boolean ticketExists(Long ticketID){
+	CopyOnWriteArrayList<Ticket> tmp = new CopyOnWriteArrayList<Ticket>();
+
+	for(Long key : trackingList.keySet()){
+	    tmp.addAll(trackingList.get(key));
+	}
+
+	for(String key : nodeList.keySet()){
+	    tmp.addAll(nodeList.get(key));
+	}
+
+	for(Ticket t : tmp){
+	    if(t.UUID.equals(ticketID))
+		return true;
+	}
+
+	return false;
+    }
     
+    // returns true if a ticket of this type exists
+    public boolean ticketExists(TicketType ticketType){
+	CopyOnWriteArrayList<Ticket> tmp = new CopyOnWriteArrayList<Ticket>();
+
+	for(Long key : trackingList.keySet()){
+	    tmp.addAll(trackingList.get(key));
+	}
+
+	for(String key : nodeList.keySet()){
+	    tmp.addAll(nodeList.get(key));
+	}
+
+	for(Ticket t : tmp){
+	    if(t.ticketType.equals(ticketType.toString()))
+		return true;
+	}
+
+	return false;
+    }
+
+
     
 }

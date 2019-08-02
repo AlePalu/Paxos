@@ -105,6 +105,13 @@ class MessageForgery{
 	return forgeNAMINGREPLY(nodeList, null, name, ticket);
     }
 
+    public static String forgeNAMESTATUS(JsonArray nodeList){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMESTATUS.toString());
+	Jmessage.add(MessageField.NODELIST.toString(), nodeList);
+	return Jmessage.toString();
+    }
+    
     public static String forgePING(Long recipientID){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PING.toString());
@@ -162,23 +169,43 @@ class MessageForgery{
     }
 
 
-    public static String forgeWHEREISNAMING(Long UUID){
+    public static String forgeWHEREISNAMING(Long UUID, String localIP){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.WHEREISNAMING.toString());
 	Jmessage.add(MessageField.SENDERID.toString(), UUID);
+	Jmessage.add(MessageField.NAME.toString(), localIP);
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGAT(String nameIP){
+    public static String forgeNAMINGAT(String nameIP, String localIP){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGAT.toString());
 	Jmessage.add(MessageField.NAMEIP.toString(), nameIP);
+	Jmessage.add(MessageField.NAME.toString(), localIP);	
 	return Jmessage.toString();
     }
 
     public static String forgePROBERSUBSCRIBE(){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PROBERSUBSCRIBE.toString());
+	return Jmessage.toString();
+    }
+
+    public static String forgeKILLNAMING(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.KILLNAMING.toString());
+	return Jmessage.toString();
+	}
+
+    public static String forgeNPELECT(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NPELECT.toString());
+	return Jmessage.toString();
+    }
+
+    public static String forgeNPBULLYSUPPRESS(){
+	JsonObject Jmessage = new JsonObject();
+	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NPBULLYSUPPRESS.toString());
 	return Jmessage.toString();
     }
     

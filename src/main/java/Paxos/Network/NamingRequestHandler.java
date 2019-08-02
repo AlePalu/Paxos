@@ -26,7 +26,8 @@ public class NamingRequestHandler implements Runnable{
     SocketBox socketBox;
     HashSet<MessageType> messageToProcess;
     Timer timer;
-
+    boolean running;
+    
     public NamingRequestHandler(String ip, int port, long UUID){
 	this.nodesOnNetworkFile = new File("processList.txt");
 	
@@ -51,12 +52,13 @@ public class NamingRequestHandler implements Runnable{
 	    messageToProcess = new HashSet<MessageType>();
 	    messageToProcess.add(MessageType.NAMINGREQUEST);
 	    messageToProcess.add(MessageType.NAMINGUPDATE);
-	    
+	    messageToProcess.add(MessageType.KILLNAMING);
 	}
 	catch (Exception e) {
-	    System.out.println("Error " + e.getMessage());
 	    e.printStackTrace();
 	}
+
+	this.running = true;
 	
 	System.out.printf("[NamingRequestHandler]: Naming server READY%n");
 
@@ -81,8 +83,10 @@ public class NamingRequestHandler implements Runnable{
 				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");	       
 				
 				// removing the association from socket registry
-				SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
-				SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				if(SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()) != null){
+				    SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
+				    SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				}
 				
 				// remove the name from list of known hosts
 				removeName(entry.getKey());
@@ -92,19 +96,18 @@ public class NamingRequestHandler implements Runnable{
 				
 				// send a SIGUNLOCK in broadcast
 				String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, null);
-				getSocketBox().sendOut(SIGUNLOCKmessage);
+			        MessageType.forwardTo(getSocketBox(), SIGUNLOCKmessage);
 			    }
 			}
 		    }
 		}
-	    }, 4000, 4000);	
-	
+	    }, 1000, 1000);	
     }
 
     public void run(){
 	String message;
 	try{	    
-	    while(true){
+	    while(this.running){
 		if(this.socketBox.getInputStream().ready()){
 		    message = this.socketBox.getInputStream().readLine();
 
@@ -134,11 +137,13 @@ public class NamingRequestHandler implements Runnable{
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
-		if(name.equals(ip)) // name already present
+		String[] ipField = ip.split(",");
+		if(name.equals(ipField[0])) // name already present
 		    return;		
 		ip = reader.readLine();
 	    }
 	}catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
 	try(FileWriter fileWriter = new FileWriter(this.nodesOnNetworkFile, true)){
@@ -147,6 +152,7 @@ public class NamingRequestHandler implements Runnable{
 	    fileWriter.write(in);
 	    fileWriter.flush();
         }catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
     }
@@ -178,7 +184,10 @@ public class NamingRequestHandler implements Runnable{
 
     public void sendCOORD(){
 	String COORDmessage = MessageForgery.forgeCOORD();
-	MessageType.forwardTo(this.socketBox, COORDmessage);
+	// broadcast UDP transmission
+	NameProber.getInstance().sendUDPBroadcast(COORDmessage);
+
+	//MessageType.forwardTo(this.socketBox, COORDmessage);
 	System.out.printf("[NamingRequestHandler]: Broadcasted name server is here%n");
     }
 
@@ -198,16 +207,24 @@ public class NamingRequestHandler implements Runnable{
 		String name = entryObj.get("IP").asString();
 		Long UUID = new Long(entryObj.get("UUID").asString());
 
+		System.out.printf("[NamingRequestHandler]: recovered ("+name+" - "+UUID+")%n");
+		
 		recordName(name, UUID);
 	    }
+
+	    // record my name
+	    recordName(Inet4Address.getLocalHost().getHostAddress(), SocketRegistry.getInstance().getMachineUUID());
 		
 	}catch(Exception e){
-	    e.printStackTrace();
+	    System.out.printf("[NamingRequestHandler]: no status to recover%n");
 	    return;
 	}
-
 	
 	System.out.printf("[NamingRequestHandler]: recovered process list according to last NAMINGREPLY received.%n");
 
+    }
+
+    public void stop(){
+	this.running = false;
     }
 }

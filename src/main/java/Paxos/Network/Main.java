@@ -4,6 +4,7 @@ import java.net.Inet4Address;
 import java.net.Socket;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 class Main{
     
@@ -24,15 +25,18 @@ class Main{
 
 	    // initialize the tracker, 2 second period
 	    Tracker.init(2);
-	    Thread.sleep(200);
+	    Thread.sleep(50);
 	    
 	    if(args.length == 0){ // dynamically discover where naming node is
 		System.out.printf("[Main]: no name IP supplied, starting NameProber service%n");
 		Thread namingProberThread = new Thread(NameProber.getInstance());
 		namingProberThread.start();
-		Thread.sleep(200);
-	
-		NameProber.getInstance().namingProbe();
+
+		// randomly wait for a given timeout (makes difficult to have triky race conditions)
+		int randomDelay = ThreadLocalRandom.current().nextInt(0,5);
+		Thread.sleep(200 + randomDelay*500);
+		
+		NameProber.getInstance().bullyElection();
 	    }else{ // manually supplied naming
 		String namingNodeIP = args[0];
 		System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");	

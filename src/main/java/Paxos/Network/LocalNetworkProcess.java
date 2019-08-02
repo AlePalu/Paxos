@@ -97,10 +97,11 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    message = this.socketBox.getInputStream().readLine();
 
 		    for(MessageType msgType : this.messageToProcess){
-				if(msgType.match(message)){
-				    msgType.applyLogic(this, message);
-				    match = true;
-				}
+			if(msgType.match(message)){
+			    //System.out.printf(message+"%n");
+			    msgType.applyLogic(this, message);
+			    match = true;
+			}
 		    }
 		    if(!match) {
 			this.inboundQueue.add(message);
