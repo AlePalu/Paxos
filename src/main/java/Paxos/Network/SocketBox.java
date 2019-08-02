@@ -51,6 +51,8 @@ public class SocketBox{
 	    if(this.machineUUID != 0 && (Jmessage.get(MessageField.MACHINEUUID.toString()) == null || Jmessage.get(MessageField.MACHINEUUID.toString()).asLong() == 0))
 		outboundJSONMessage.add(MessageField.MACHINEUUID.toString(), this.machineUUID);
 
+
+
 	    // send the message
 	    this.socketOutputStream.write(outboundJSONMessage.toString());
 	    this.socketOutputStream.newLine();

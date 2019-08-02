@@ -79,9 +79,9 @@ public class NameProber implements Runnable{
     private NameProberExecutor executor;
     
     private static NameProber instance;
-    
+
     private NameProber(){
-	this.port = 40001;
+        this.port = 40001;
 
 	this.rng = new Random();
 	Long randomNumber = Math.abs(rng.nextLong());
@@ -93,14 +93,11 @@ public class NameProber implements Runnable{
 	    this.socketBox = new SocketBox(connSocket);
 	    this.socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 
-	    String PROBERSUBSCRIBEmessage = MessageForgery.forgePROBERSUBSCRIBE();
-	    this.socketBox.sendOut(PROBERSUBSCRIBEmessage);
-	    
-	    this.datagramSocket = new DatagramSocket(this.port);
-	}catch(Exception e){
-	    return;
-	}
-	this.buff = new byte[1024];
+        try{
+            // open connection with network infrastructure
+            Socket connSocket = new Socket(Inet4Address.getLocalHost().getHostAddress(), 40000); // connecting to NetworkInfrastructure
+            this.socketBox = new SocketBox(connSocket);
+            this.socketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
 
 	this.executor = new NameProberExecutor();
 
@@ -109,9 +106,9 @@ public class NameProber implements Runnable{
     }
 
     public static NameProber getInstance(){
-	if(instance == null)
-	    instance = new NameProber();
-	return instance;
+        if(instance == null)
+            instance = new NameProber();
+        return instance;
     }
 
     public void sendUDPBroadcast(String message){
@@ -210,11 +207,11 @@ public class NameProber implements Runnable{
     }
 
     public Long getUUID(){
-	return this.UUID;
+        return this.UUID;
     }
 
     public SocketBox getSocketBox(){
-	return this.socketBox;
+        return this.socketBox;
     }
-    
+
 }
