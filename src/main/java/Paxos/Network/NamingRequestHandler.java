@@ -52,7 +52,6 @@ public class NamingRequestHandler implements Runnable{
 	    messageToProcess = new HashSet<MessageType>();
 	    messageToProcess.add(MessageType.NAMINGREQUEST);
 	    messageToProcess.add(MessageType.NAMINGUPDATE);
-	    messageToProcess.add(MessageType.KILLNAMING);
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
@@ -71,15 +70,15 @@ public class NamingRequestHandler implements Runnable{
 
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
-			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString());
+			// process considered alive if response arrives in at most 2 seconds
+			Tracker.getInstance().issueTicket(entry.getKey(), 2000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString());
 
 			entry.getValue().sendOut(PINGmessage);
 		    }		    
 		
 		    for(Entry<String, CopyOnWriteArrayList<Ticket>> entry : Tracker.getInstance().getNamingTickets().entrySet()){
 			for(Ticket t : entry.getValue()){
-			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
+			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(TicketType.PING.toString())){
 				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");	       
 				
 				// removing the association from socket registry
@@ -184,10 +183,8 @@ public class NamingRequestHandler implements Runnable{
 
     public void sendCOORD(){
 	String COORDmessage = MessageForgery.forgeCOORD();
-	// broadcast UDP transmission
-	NameProber.getInstance().sendUDPBroadcast(COORDmessage);
 
-	//MessageType.forwardTo(this.socketBox, COORDmessage);
+	MessageType.forwardTo(this.socketBox, COORDmessage);
 	System.out.printf("[NamingRequestHandler]: Broadcasted name server is here%n");
     }
 
