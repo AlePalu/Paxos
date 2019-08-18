@@ -28,7 +28,7 @@ class Main{
 	    Thread.sleep(50);
 	    
 	    if(args.length == 0){ // dynamically discover where naming node is
-		System.out.printf("[Main]: no name IP supplied, starting NameProber service%n");
+		System.out.printf("[Main]: starting NameProber service to search for name server...%n");
 		Thread namingProberThread = new Thread(NameProber.getInstance());
 		namingProberThread.start();
 
@@ -36,51 +36,48 @@ class Main{
 		int randomDelay = ThreadLocalRandom.current().nextInt(0,5);
 		Thread.sleep(200 + randomDelay*500);
 		
-		NameProber.getInstance().bullyElection();
-	    }else{ // manually supplied naming
-		String namingNodeIP = args[0];
-		System.out.printf("[Main]: supplied naming service IP : " + namingNodeIP + "\n");	
-
-		// always need to start naming probe service, to handle join of new nodes
-		Thread namingProberThread = new Thread(NameProber.getInstance());
-		namingProberThread.start();
-		Thread.sleep(200);
-	
-		System.out.printf("[Main]: checking if an already running name service is present on network...%n");
 		NameProber.getInstance().namingProbe();
-		Thread.sleep(2000); // wait name service discover to be completed
-
-		if(SocketRegistry.getInstance().getNamingSocket() != null){
-		    System.out.printf("[Main]: NameProber found an active name service. Not launching a new one.%n");
+		Thread.sleep(1000);
+		if(SocketRegistry.getInstance().getNamingSocket() == null){
+		    System.out.printf("[NameProber]: No name server active, waiting for system recovery...%n");
+		}
+		while(SocketRegistry.getInstance().getNamingSocket() == null){ // wait until the name server is ready
+		    NameProber.getInstance().namingProbe();
+		    Thread.sleep(1000);
+		}
+	    }else{ // manually supplied naming
+		String inputField = args[0];
+		if(!inputField.equals("-n")){
+		    System.out.printf("[Main]: bad argument. Aborting%n");
+		    return;
 		}else{
-		    if(Inet4Address.getLocalHost().getHostAddress().equals(namingNodeIP)){
-			System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
+		    System.out.printf("[Main]: this node will act as first name server\n");	
 
-			// give time to network infrastructure to go up
-			Thread.sleep(200);
-		
-			NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, UUID);
-			Thread namingThread = new Thread(namingHandler);
-			namingThread.start();
+		    // always need to start naming probe service, to handle join of new nodes
+		    Thread namingProberThread = new Thread(NameProber.getInstance());
+		    namingProberThread.start();
+		    Thread.sleep(200);
+	
+		    System.out.printf("[Main]: checking if an already running name service is present on network...%n");
+		    NameProber.getInstance().namingProbe();
+		    Thread.sleep(2000); // wait name service discover to be completed
+
+		    if(SocketRegistry.getInstance().getNamingSocket() != null){
+			System.out.printf("[Main]: NameProber found an active name service. Not launching a new one.%n");
 		    }else{
-			System.out.printf("[Main]: Naming service is remote. Using the supplied IP as Naming service reference...\n");		
-			// open connection with naming service node
-			Socket namingSocket = new Socket(namingNodeIP, 40000);
-			SocketBox namingSocketBox = new SocketBox(namingSocket);
-			namingSocketBox.setUUID(SocketRegistry.getInstance().getMachineUUID());
-			SocketRegistry.getInstance().setNamingSocket(namingSocketBox);
+			 System.out.printf("[Main]: Naming service will run on this node. Starting Naming service...\n");
 
-			String NAMINGUPDATEmessage = MessageForgery.forgeNAMINGUPDATE(Inet4Address.getLocalHost().getHostAddress());
-			SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGUPDATEmessage);
-
-			String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
-			SocketRegistry.getInstance().getNamingSocket().sendOut(NAMINGREQUESTmessage);
+			 // give time to network infrastructure to go up
+			 Thread.sleep(200);
+		
+			 NamingRequestHandler namingHandler = new NamingRequestHandler(Inet4Address.getLocalHost().getHostAddress(), 40000, UUID);
+			 Thread namingThread = new Thread(namingHandler);
+			 namingThread.start();			
 		    }
 		}
 	    }
-	    
 	}catch(Exception e){
-		e.printStackTrace();
+	    e.printStackTrace();
 	    return;
 	}
     }

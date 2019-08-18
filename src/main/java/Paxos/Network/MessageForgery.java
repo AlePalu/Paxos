@@ -1,6 +1,7 @@
 package Paxos.Network;
 
 import java.util.Random;
+import java.net.Inet4Address;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -18,6 +19,8 @@ enum MessageField{
     MACHINEUUID("MACHINEUUID"),
     SIGTYPE("SIGTYPE"),
     NAMEIP("NAMEIP"),
+    MSGID("MSGID"),
+    EXPECTEDID("EXPECTEDID"),
     
     ROUND("ROUND");
     
@@ -105,13 +108,6 @@ class MessageForgery{
 	return forgeNAMINGREPLY(nodeList, null, name, ticket);
     }
 
-    public static String forgeNAMESTATUS(JsonArray nodeList){
-	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMESTATUS.toString());
-	Jmessage.add(MessageField.NODELIST.toString(), nodeList);
-	return Jmessage.toString();
-    }
-    
     public static String forgePING(Long recipientID){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PING.toString());
@@ -190,23 +186,4 @@ class MessageForgery{
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PROBERSUBSCRIBE.toString());
 	return Jmessage.toString();
     }
-
-    public static String forgeKILLNAMING(){
-	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.KILLNAMING.toString());
-	return Jmessage.toString();
-	}
-
-    public static String forgeNPELECT(){
-	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NPELECT.toString());
-	return Jmessage.toString();
-    }
-
-    public static String forgeNPBULLYSUPPRESS(){
-	JsonObject Jmessage = new JsonObject();
-	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NPBULLYSUPPRESS.toString());
-	return Jmessage.toString();
-    }
-    
 }
