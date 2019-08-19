@@ -33,7 +33,7 @@ public class Test {
 
         a3.propose("java i1s wonderful",a3.getid());
 
-        Thread.sleep(1000);
+        //Thread.sleep(1000);
         a2.propose("java sucks",12);
 
 	    // Thread.sleep(1000);
