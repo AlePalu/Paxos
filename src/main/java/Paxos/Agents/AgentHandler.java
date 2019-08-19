@@ -62,7 +62,7 @@ public class AgentHandler implements Runnable {
            if(network.isThereAnyMessage()) {
                s = network.receiveMessage();
                m = new Message(s);
-               System.out.println(data.getId()+" receve"+s);
+               //System.out.println(data.getId()+" receve"+s);
                respons(m);
 	   }
         }
@@ -75,7 +75,7 @@ public class AgentHandler implements Runnable {
             this.data.setNumOfProces(network.lookupConnectedProcesses().size());
         }catch(InterruptedException e){e.printStackTrace();}
         propose = p.propose(val,proposeID);
-        System.out.println(data.getId()+" send propose"+propose);
+        //System.out.println(data.getId()+" send propose"+propose);
         network.sendMessage(propose);
     }
 
@@ -97,7 +97,7 @@ public class AgentHandler implements Runnable {
                     break;
             }
             if (response != null) {
-                System.out.println(data.getId()+" send"+response);
+                //System.out.println(data.getId()+" send"+response);
                 network.sendMessage(response);
             }
         }catch(Exception e){}

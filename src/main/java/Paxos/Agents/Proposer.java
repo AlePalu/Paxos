@@ -27,9 +27,10 @@ public class Proposer {
     String processRespondToPrepareRequest() {
         //System.out.println("[Proposer "+data.getId() + " ]: receive a vote for: "+ this.proposedValue);
         currentNumOfVoter++;
-        if (currentNumOfVoter > data.getNumOfProces()/2 && !data.isWin()) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && !this.win) {
             //System.out.println("[Proposer]: my propose win: "+ this.proposedValue);
-            data.setwin();
+            //data.setwin();
+            win = true;
             return MessageForgery.forgeACCEPTREQUEST(data.getId(),this.proposedValue);
         }
         else

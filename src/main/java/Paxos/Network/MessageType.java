@@ -636,7 +636,7 @@ public enum MessageType implements TrafficRule{
 	    String actualForwardType = Jmessage.get(MessageField.FORWARDTYPE.toString()).asString();
 	    
 	    if(forwardType.contains(actualForwardType)){
-		ArrayList<SocketBox> sockets = new ArrayList<SocketBox>();
+		HashSet<SocketBox> sockets = new HashSet<SocketBox>();
 
 		for(Long UUID : SocketRegistry.getInstance().getLocalUUID()){
 		    sockets.add(SocketRegistry.getInstance().getRegistry().get(UUID));
