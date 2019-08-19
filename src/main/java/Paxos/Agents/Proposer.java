@@ -1,7 +1,6 @@
 package Paxos.Agents;
 
-import Paxos.Network.Message;
-import Paxos.Network.MessageType;
+import Paxos.Network.MessageForgery;
 
 
 public class Proposer {
@@ -18,23 +17,20 @@ public class Proposer {
         this.proposedValue = null;
     }
 
-    Message propose(String val) {
-        Message m;
+    String propose(String val, Long proposeID) {
+        //System.out.println("[Proposer "+data.getId() + " ]: make a propose with value: "+val+"and ID: "+ proposeID);
         this.proposedValue = val;
-        this.currentNumOfVoter =0;
-        m = new Message(null, null, MessageType.PREPAREREQUEST,data.getRound());
-        m.setAsBroadcast();
-        return m;
+        this.currentNumOfVoter = 0;
+        return MessageForgery.forgePREPAREREQUEST(proposeID);
     }
 
-    Message processRespondToPrepareRequest() {
-        Message respond;
+    String processRespondToPrepareRequest() {
+        //System.out.println("[Proposer "+data.getId() + " ]: receive a vote for: "+ this.proposedValue);
         currentNumOfVoter++;
         if (currentNumOfVoter > data.getNumOfProces()/2 && !data.isWin()) {
+            //System.out.println("[Proposer]: my propose win: "+ this.proposedValue);
             data.setwin();
-            respond = new Message(null, this.proposedValue, MessageType.ACCEPTREQUEST,data.getRound());
-            respond.setAsBroadcast();
-            return respond;
+            return MessageForgery.forgeACCEPTREQUEST(data.getId(),this.proposedValue);
         }
         else
             return null;

@@ -13,7 +13,6 @@ enum MessageField{
     FORWARDTYPE("FORWARDTYPE"),
     SENDERID("SENDERID"),
     NAME("NAME"),
-    VALUE("VALUE"),
     NODELIST("NODELIST"),
     TICKET("TICKET"),
     MACHINEUUID("MACHINEUUID"),
@@ -22,8 +21,12 @@ enum MessageField{
     MSGID("MSGID"),
     EXPECTEDID("EXPECTEDID"),
     
-    ROUND("ROUND");
-    
+    ROUND("ROUND"),
+
+    //paxos stuff
+	PROPOSEID("PROPOSEDID"),
+	VALUE("VALUE");
+
     private String name;
     
     private MessageField(String name){
@@ -35,7 +38,7 @@ enum MessageField{
     }
 }
 
-class MessageForgery{
+public class MessageForgery{
 
     public static String forgeDISCOVERREPLY(JsonArray connectedProcesses, Long recipientID){
 	JsonObject Jmessage = new JsonObject();
@@ -186,4 +189,48 @@ class MessageForgery{
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PROBERSUBSCRIBE.toString());
 	return Jmessage.toString();
     }
+
+    public static String forgePREPAREREQUEST(long proposeid){
+    	JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PREPAREREQUEST.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
+		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+
+		return Jmessage.toString();
+	}
+
+	public static String forgeRESPONDTOPREPAREREQUEST(long recipientID, long proposeid){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.RESPONDTOPREPAREREQUEST.toString());
+		Jmessage.add(MessageField.RECIPIENTID.toString(),recipientID);
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
+		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
+
+		return Jmessage.toString();
+	}
+
+	public static String forgeACCEPTREQUEST(long proposeID, String value){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.ACCEPTREQUEST.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
+		Jmessage.add(MessageField.VALUE.toString(),value);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+		return Jmessage.toString();
+	}
+
+	public static String forgeDECISION(long proposeID, String value){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.DECISION.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
+		Jmessage.add(MessageField.VALUE.toString(),value);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+		return Jmessage.toString();
+	}
 }

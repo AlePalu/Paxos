@@ -54,7 +54,7 @@ public class AgentHandler implements Runnable {
         String s;
         while(true) {
            try{
-               Thread.sleep(10);
+               Thread.sleep(100);
            }
            catch(InterruptedException e){
                e.printStackTrace();
@@ -62,23 +62,25 @@ public class AgentHandler implements Runnable {
            if(network.isThereAnyMessage()) {
                s = network.receiveMessage();
                m = new Message(s);
+               System.out.println(data.getId()+" receve"+s);
                respons(m);
 	   }
         }
     }
 
-    public void propose(String val){
-        Message propose;
+    public void propose(String val, long proposeID){
+        String propose;
         try {
             network.updateConnectedProcessesList();
             this.data.setNumOfProces(network.lookupConnectedProcesses().size());
         }catch(InterruptedException e){e.printStackTrace();}
-        propose = p.propose(val);
-        network.sendMessage(propose.getJSON());
+        propose = p.propose(val,proposeID);
+        System.out.println(data.getId()+" send propose"+propose);
+        network.sendMessage(propose);
     }
 
     private void respons(Message m){
-        Message response = null;
+        String response = null;
         try {
             switch (m.getMessageType()) {
                 case "PREPAREREQUEST":
@@ -88,15 +90,15 @@ public class AgentHandler implements Runnable {
                     response = p.processRespondToPrepareRequest();
                     break;
                 case "ACCEPTREQUEST":
-                    network.updateConnectedProcessesList();
-                    data.setNumOfProces(network.lookupConnectedProcesses().size());
                     response = a.processAcceptRequest(m);
+                    break;
                 case "DECISION":
                     l.processDecisionRequest(m);
                     break;
             }
             if (response != null) {
-                network.sendMessage(response.getJSON());
+                System.out.println(data.getId()+" send"+response);
+                network.sendMessage(response);
             }
         }catch(Exception e){}
     }
