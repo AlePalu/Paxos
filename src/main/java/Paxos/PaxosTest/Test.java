@@ -28,11 +28,13 @@ public class Test {
         Thread.sleep(1000);
 
        // System.out.println(a1.getid()+" think java sucks");
-        System.out.println(a3.getid()+" think java is wonderful");
+      //  System.out.println(a3.getid()+" think java is wonderful");
 
 
         a3.propose("java i1s wonderful",a3.getid());
-      //  a2.propose("java sucks");
+
+        Thread.sleep(1000);
+        a2.propose("java sucks",12);
 
 	    // Thread.sleep(1000);
        // a3.propose("java i1s wonder2ful");
