@@ -45,10 +45,6 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     // required by naming server fault detection
     public Boolean nameFault;
 
-    //Crypto stuff
-	private AES aes;
-
-    
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
 		Socket processSocket = new Socket(ip, port); // connect to network infrastructure
 		this.socketBox = new SocketBox(processSocket);
