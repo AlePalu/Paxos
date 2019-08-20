@@ -23,24 +23,21 @@ public class Message{
     // paxos related informations
     private Long senderID;
     private Long recipientID;
+    private Long proposeID;
     private String value;
     private String messageType; // type of agent to which this message is directed
     private int round;
+
 
     // needed for internal operation
     private Boolean isBroadcast;
 
     // used when you want to send a message
-    public Message(Long recipientID, String value, MessageType messageType, int round){
+    public Message(Long recipientID, String value, MessageType messageType){
         this.recipientID = recipientID;
         this.value = value;
         this.messageType = messageType.toString();
         this.isBroadcast = false;
-        this.round = round;
-    }
-
-    public int getRound(){
-        return this.round;
     }
 
     // used to build the object from a JSON message, users interact with Message objects not JSON strings!
@@ -48,13 +45,16 @@ public class Message{
         JsonObject jsonMessage = Json.parse(message).asObject();
         if(this.recipientID!=null)
             this.recipientID = jsonMessage.get(MessageField.RECIPIENTID.toString()).asLong();
-        this.round = jsonMessage.get(MessageField.ROUND.toString()).asInt();
-	this.messageType = jsonMessage.get(MessageField.MSGTYPE.toString()).asString();
-	if(!jsonMessage.get(MessageField.VALUE.toString()).isNull())
-	    this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
 
-	// this is automatically inserted by the routing logic
-	this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
+	    this.messageType = jsonMessage.get(MessageField.MSGTYPE.toString()).asString();
+
+	    if(!jsonMessage.get(MessageField.VALUE.toString()).isNull())
+	        this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
+	    if(!jsonMessage.get(MessageField.PROPOSEID.toString()).isNull())
+		this.proposeID = jsonMessage.get(MessageField.PROPOSEID.toString()).asLong();
+
+	    // this is automatically inserted by the routing logic
+	    this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
     }
 
 
@@ -64,6 +64,10 @@ public class Message{
 
     public Long getRecipientID(){
         return this.recipientID;
+    }
+
+    public Long getProposeID(){
+        return proposeID;
     }
 
     public Long getSenderID(){

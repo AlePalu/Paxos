@@ -16,12 +16,15 @@ def killNetStack(process):
     # kill any process attached to it
     for p in procList:
         killProc(p)
+    procList.clear()
 
 def killProc(process):
     process.terminate()
+    if process in procList:
+        procList.remove(process)
 
 def startClient():
-    if(len(procList) < 5):
+    if(len(procList) < 3):
         client = subprocess.Popen('java -jar build/libs/Paxos-NetworkTest.jar', shell=True)
         procList.append(client)
 
@@ -42,7 +45,6 @@ if __name__ == "__main__":
         # some event will happen now...
         p = random.uniform(0,1)
         
-        if p < 0.1: # with 10% probability kill a process(if any)
             print("[Tester]: *** killing a process ***")
             killClientAtRandom()
 
@@ -53,13 +55,10 @@ if __name__ == "__main__":
         if not isUp and p > 0.8: # is node is down, reactivate it with 20% probability
             print("[Tester]: *** reactivating node ***")
             n = startNetStack()
-            time.sleep(5)
             isUp = True
+            p = random.uniform(0,1)
             
-        if p > 0.95 and isUp: # with 5% probability kill the entire node
+        if p > 0.98 and isUp: # with 3% probability kill the entire node
             print("[Tester]: *** killing the entire node ***")
             killNetStack(n)
             isUp = False
-
-        # in any other case, do nothing
-        print("[Tester]: *** nothing to do... ***")

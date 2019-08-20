@@ -1,7 +1,7 @@
 package Paxos.Agents;
 
 import Paxos.Network.Message;
-import Paxos.Network.MessageType;
+import Paxos.Network.MessageForgery;
 
 public class Aceptor {
 
@@ -14,22 +14,25 @@ public class Aceptor {
 
     }
 
-    Message processPrepareRequest(Message m){
-        if(m.getSenderID()>=bound && data.getCurrentValue() == null) {
-            bound = m.getSenderID();
-            return new Message(m.getSenderID(), null, MessageType.RESPONDTOPREPAREREQUEST);
+    String processPrepareRequest(Message m){
+        System.out.println("[Acceptor "+data.getId() + " ]: receive propose with ID: "+ m.getProposeID());
+        if(m.getProposeID() >= bound && data.getCurrentValue() == null) {
+            System.out.println("[Acceptor "+data.getId() + " ]: make a promise for ID: "+ m.getProposeID());
+            bound = m.getProposeID();
+            return MessageForgery.forgeRESPONDTOPREPAREREQUEST(m.getSenderID(),m.getProposeID());
         }
         return null;
     }
 
-    Message processAcceptRequest(Message m){
-        Message respond;
-        if (m.getSenderID()<bound)
+    String processAcceptRequest(Message m) {
+        System.out.println("[Acceptor "+data.getId() + " ]: receive Value: "+m.getValue()+ " with ID: "+ m.getProposeID());
+        if (m.getProposeID() < bound) {
+            System.out.println("[Acceptor "+data.getId() + " ]: i can't accept");
             return null;
-        respond = new Message(null,m.getValue(),MessageType.DECISION);
-        respond.setAsBroadcast();
-        return respond;
+        }
+        return MessageForgery.forgeDECISION(m.getProposeID(),m.getValue());
     }
+
 
 }
 

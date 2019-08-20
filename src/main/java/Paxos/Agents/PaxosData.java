@@ -5,12 +5,19 @@ public class PaxosData {
     private String currentValue;
     private int numOfProces;
     private long id;
+    //private int round;
 
     public PaxosData(int numOfProces, long id){
         this.currentValue= null;
         this.numOfProces = numOfProces;
         this.id=id;
+        //this.round = 0;
 
+    }
+
+    void reset(){
+        this.currentValue = null;
+        //this.win = false;
     }
 
     long getId() {
@@ -32,4 +39,12 @@ public class PaxosData {
     int getNumOfProces() {
         return numOfProces;
     }
+
+   /*
+    void nextRound(){ this.round++; }
+
+    int getRound(){
+        return this.round;
+    }
+*/
 }

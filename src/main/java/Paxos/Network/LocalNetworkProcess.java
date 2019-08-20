@@ -44,7 +44,8 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
     
     // required by naming server fault detection
     public Boolean nameFault;
-    
+    public Boolean needRecovery;
+
     public LocalNetworkProcess(String ip, int port, long UUID) throws IOException{
 		Socket processSocket = new Socket(ip, port); // connect to network infrastructure
 		this.socketBox = new SocketBox(processSocket);
@@ -74,6 +75,7 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		this.sendMessage(SUBSCRIBEmessage);
 		
 		this.nameFault = false;
+		this.needRecovery = false;
     }
 
     public void run(){
@@ -97,10 +99,11 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 		    message = this.socketBox.getInputStream().readLine();
 
 		    for(MessageType msgType : this.messageToProcess){
-				if(msgType.match(message)){
-				    msgType.applyLogic(this, message);
-				    match = true;
-				}
+			if(msgType.match(message)){
+			    //System.out.printf(message+"%n");
+			    msgType.applyLogic(this, message);
+			    match = true;
+			}
 		    }
 		    if(!match) {
 			this.inboundQueue.add(message);
@@ -134,48 +137,14 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 
     // this force sending of DISCOVER message. Be carefull this call blocks the caller until the DISCOVERRESPONSE has been processed
     public void updateConnectedProcessesList() throws InterruptedException{
-	System.out.printf("[NetworkStack]: performing naming update...\n");
-	// force update of known node on network
-	String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
-       	this.sendMessage(NAMINGREQUESTmessage);
+	do{
+	    System.out.printf("[NetworkStack]: performing naming update...\n");
+	    // force update of known node on network
+	    String NAMINGREQUESTmessage = MessageForgery.forgeNAMINGREQUEST();
+	    this.sendMessage(NAMINGREQUESTmessage);
 
-	// wait for naming processing...
+	    // wait for naming processing...
 	
-	// set up a sentinel to eventually unlock the process in case of race conditions
-	this.timer = new Timer();
-	try{
-	    timer.scheduleAtFixedRate(new TimerTask(){
-		    public void run(){
-			if(nameFault){
-			    lock.lock();
-			    namingLock.signalAll();
-			    lock.unlock();
-			}
-		    }
-	    },1000,1000);
-	}catch(Exception e){
-	    // timer was already canceled when delay elapsed, simply ignore this exception
-	}
-	lock.lock();
-	try {
-	    namingLock.await();
-	}finally{
-	    lock.unlock();
-	}
-
-	// delete the timer
-	timer.cancel();
-	timer.purge();
-	
-        if(!nameFault){
-	    System.out.printf("[NetworkStack]: discovering currently connected processes on network...\n");
-	    // reset the current list of known processes
-	    this.connectedProcesses.clear();
-
-	    String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
-	    this.sendMessage(DISCOVERREQUESTmessage);
-
-	    // waiting for processes discovering...
 	    // set up a sentinel to eventually unlock the process in case of race conditions
 	    this.timer = new Timer();
 	    try{
@@ -183,28 +152,17 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 			public void run(){
 			    if(nameFault){
 				lock.lock();
-				discoverMessageLock.signalAll();
+				namingLock.signalAll();
 				lock.unlock();
 			    }
 			}
 		    },1000,1000);
-		// what to do in the unlucky case where no process has discovered name server was death??
-		timer.schedule(new TimerTask(){
-			public void run(){
-			    lock.lock();
-			    // unlock the process
-			    discoverMessageLock.signalAll();
-			    lock.unlock();
-			    System.out.printf("[NetworkStack]: got stucked while discovering processes, maybe something was wrong...%n");
-			}
-		    }, 7000);
 	    }catch(Exception e){
 		// timer was already canceled when delay elapsed, simply ignore this exception
 	    }
-	    
 	    lock.lock();
-	    try{
-		discoverMessageLock.await();
+	    try {
+		namingLock.await();
 	    }finally{
 		lock.unlock();
 	    }
@@ -212,26 +170,84 @@ public class LocalNetworkProcess implements Runnable, NetworkInterface{
 	    // delete the timer
 	    timer.cancel();
 	    timer.purge();
-	}
-	if(nameFault){
-	    /* name server fault.
-	       Possible naming failures are handled by a bully election mechanism by which at the end a new name server is elected. 
-	       Since election requires to elect a new physical node where run a new name server, the local process does not handle the election, but simply signals to its network infrastructure to start it. */
+	
+	    if(!nameFault){
+		// let's suppose all will go ok... can return to caller
+		needRecovery = false;
+		
+		System.out.printf("[NetworkStack]: discovering currently connected processes on network...\n");
+		// reset the current list of known processes
+		this.connectedProcesses.clear();
 
-	    System.out.printf("[NetworkStack]: name server fault! starting election of new name server...\n");
+		String DISCOVERREQUESTmessage = MessageForgery.forgeDISCOVERREQUEST();
+		this.sendMessage(DISCOVERREQUESTmessage);
+
+		// waiting for processes discovering...
+		// set up a sentinel to eventually unlock the process in case of race conditions
+		this.timer = new Timer();
+		try{
+		    timer.scheduleAtFixedRate(new TimerTask(){
+			    public void run(){
+				if(nameFault){
+				    lock.lock();
+				    discoverMessageLock.signalAll();
+				    lock.unlock();
+				}
+			    }
+			},1000,1000);
+		    // what to do in the unlucky case where no process has discovered name server was death??
+		    timer.schedule(new TimerTask(){
+			    public void run(){
+				lock.lock();
+				// unlock the process
+				discoverMessageLock.signalAll();
+
+				// something was wrong, don't return to caller
+				needRecovery = true;
+
+				lock.unlock();
+				System.out.printf("[NetworkStack]: got stucked while discovering processes, maybe something was wrong...%n");
+			    }
+			}, 7000);
+		}catch(Exception e){
+		    // timer was already canceled when delay elapsed, simply ignore this exception
+		}
 	    
-	    String BULLYREQUESTmessage = MessageForgery.forgeBULLYREQUEST();
-	    this.sendMessage(BULLYREQUESTmessage);
+		lock.lock();
+		try{
+		    discoverMessageLock.await();
+		}finally{
+		    lock.unlock();
+		}
 
-	    // waiting system to be recovered
-	    lock.lock();
-	    try {
-		namingLock.await();
-	    }finally{
-		lock.unlock();
+		// delete the timer
+		timer.cancel();
+		timer.purge();
 	    }
+	    if(nameFault){
+		/* name server fault.
+		   Possible naming failures are handled by a bully election mechanism by which at the end a new name server is elected. 
+		   Since election requires to elect a new physical node where run a new name server, the local process does not handle the election, but simply signals to its network infrastructure to start it. */
+
+		// something was wrong, don't return to caller
+		needRecovery = true;
+		
+		System.out.printf("[NetworkStack]: name server fault! starting election of new name server...\n");
 	    
-	}
+		String BULLYREQUESTmessage = MessageForgery.forgeBULLYREQUEST();
+		this.sendMessage(BULLYREQUESTmessage);
+
+		// waiting system to be recovered
+		lock.lock();
+		try {
+		    namingLock.await();
+		}finally{
+		    lock.unlock();
+		}
+	    }
+	}while(needRecovery); // do not return to caller if the network is not in a stable state
+	
+	return;
     }
 
     public HashSet<String> getPendingDiscoverList(){

@@ -1,6 +1,7 @@
 package Paxos.Network;
 
 import java.util.Random;
+import java.net.Inet4Address;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -12,15 +13,20 @@ enum MessageField{
     FORWARDTYPE("FORWARDTYPE"),
     SENDERID("SENDERID"),
     NAME("NAME"),
-    VALUE("VALUE"),
     NODELIST("NODELIST"),
     TICKET("TICKET"),
     MACHINEUUID("MACHINEUUID"),
     SIGTYPE("SIGTYPE"),
     NAMEIP("NAMEIP"),
+    MSGID("MSGID"),
+    EXPECTEDID("EXPECTEDID"),
     
-    ROUND("ROUND");
-    
+    ROUND("ROUND"),
+
+    //paxos stuff
+	PROPOSEID("PROPOSEDID"),
+	VALUE("VALUE");
+
     private String name;
     
     private MessageField(String name){
@@ -32,7 +38,7 @@ enum MessageField{
     }
 }
 
-class MessageForgery{
+public class MessageForgery{
 
     public static String forgeDISCOVERREPLY(JsonArray connectedProcesses, Long recipientID){
 	JsonObject Jmessage = new JsonObject();
@@ -162,17 +168,19 @@ class MessageForgery{
     }
 
 
-    public static String forgeWHEREISNAMING(Long UUID){
+    public static String forgeWHEREISNAMING(Long UUID, String localIP){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.WHEREISNAMING.toString());
 	Jmessage.add(MessageField.SENDERID.toString(), UUID);
+	Jmessage.add(MessageField.NAME.toString(), localIP);
 	return Jmessage.toString();
     }
 
-    public static String forgeNAMINGAT(String nameIP){
+    public static String forgeNAMINGAT(String nameIP, String localIP){
 	JsonObject Jmessage = new JsonObject();
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.NAMINGAT.toString());
 	Jmessage.add(MessageField.NAMEIP.toString(), nameIP);
+	Jmessage.add(MessageField.NAME.toString(), localIP);	
 	return Jmessage.toString();
     }
 
@@ -181,5 +189,48 @@ class MessageForgery{
 	Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PROBERSUBSCRIBE.toString());
 	return Jmessage.toString();
     }
-    
+
+    public static String forgePREPAREREQUEST(long proposeid){
+    	JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PREPAREREQUEST.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
+		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+
+		return Jmessage.toString();
+	}
+
+	public static String forgeRESPONDTOPREPAREREQUEST(long recipientID, long proposeid){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.RESPONDTOPREPAREREQUEST.toString());
+		Jmessage.add(MessageField.RECIPIENTID.toString(),recipientID);
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
+		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
+
+		return Jmessage.toString();
+	}
+
+	public static String forgeACCEPTREQUEST(long proposeID, String value){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.ACCEPTREQUEST.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
+		Jmessage.add(MessageField.VALUE.toString(),value);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+		return Jmessage.toString();
+	}
+
+	public static String forgeDECISION(long proposeID, String value){
+		JsonObject Jmessage = new JsonObject();
+		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.DECISION.toString());
+		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
+		Jmessage.add(MessageField.VALUE.toString(),value);
+
+		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
+		return Jmessage.toString();
+	}
 }

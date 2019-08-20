@@ -52,10 +52,8 @@ public class NamingRequestHandler implements Runnable{
 	    messageToProcess = new HashSet<MessageType>();
 	    messageToProcess.add(MessageType.NAMINGREQUEST);
 	    messageToProcess.add(MessageType.NAMINGUPDATE);
-	    
 	}
 	catch (Exception e) {
-	    System.out.println("Error " + e.getMessage());
 	    e.printStackTrace();
 	}
 
@@ -72,20 +70,22 @@ public class NamingRequestHandler implements Runnable{
 
 			// parse the message to get the ticket identifier
 			JsonObject Jmessage = Json.parse(PINGmessage).asObject();
-			// process considered alive if response arrives in at most 5 seconds
-			Tracker.getInstance().issueTicket(entry.getKey(), 5000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString());
+			// process considered alive if response arrives in at most 2 seconds
+			Tracker.getInstance().issueTicket(entry.getKey(), 2000, Jmessage.get(MessageField.TICKET.toString()).asLong(), TicketType.PING.toString());
 
 			entry.getValue().sendOut(PINGmessage);
 		    }		    
 		
 		    for(Entry<String, CopyOnWriteArrayList<Ticket>> entry : Tracker.getInstance().getNamingTickets().entrySet()){
 			for(Ticket t : entry.getValue()){
-			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(MessageType.PING.toString())){
+			    if(Tracker.getInstance().isExpired(t) && t.ticketType.equals(TicketType.PING.toString())){
 				System.out.printf("[Tracker]: I was not able to receive any response from remote node "+entry.getKey()+". Removing any reference to it.%n");	       
 				
 				// removing the association from socket registry
-				SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
-				SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				if(SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()) != null){
+				    SocketRegistry.getInstance().getRemoteNodeRegistry().get(entry.getKey()).close();
+				    SocketRegistry.getInstance().getRemoteNodeRegistry().remove(entry.getKey());
+				}
 				
 				// remove the name from list of known hosts
 				removeName(entry.getKey());
@@ -95,13 +95,12 @@ public class NamingRequestHandler implements Runnable{
 				
 				// send a SIGUNLOCK in broadcast
 				String SIGUNLOCKmessage = MessageForgery.forgeSIGUNLOCK(ForwardType.BROADCAST, null);
-				getSocketBox().sendOut(SIGUNLOCKmessage);
+			        MessageType.forwardTo(getSocketBox(), SIGUNLOCKmessage);
 			    }
 			}
 		    }
 		}
-	    }, 4000, 4000);	
-	
+	    }, 1000, 1000);	
     }
 
     public void run(){
@@ -137,11 +136,13 @@ public class NamingRequestHandler implements Runnable{
 	try(BufferedReader reader = new BufferedReader(new FileReader(this.nodesOnNetworkFile))){
 	    String ip = reader.readLine();
 	    while(ip != null){
-		if(name.equals(ip)) // name already present
+		String[] ipField = ip.split(",");
+		if(name.equals(ipField[0])) // name already present
 		    return;		
 		ip = reader.readLine();
 	    }
 	}catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
 	try(FileWriter fileWriter = new FileWriter(this.nodesOnNetworkFile, true)){
@@ -150,6 +151,7 @@ public class NamingRequestHandler implements Runnable{
 	    fileWriter.write(in);
 	    fileWriter.flush();
         }catch(Exception e){
+	    e.printStackTrace();
 	    return;
 	}
     }
@@ -181,6 +183,7 @@ public class NamingRequestHandler implements Runnable{
 
     public void sendCOORD(){
 	String COORDmessage = MessageForgery.forgeCOORD();
+
 	MessageType.forwardTo(this.socketBox, COORDmessage);
 	System.out.printf("[NamingRequestHandler]: Broadcasted name server is here%n");
     }
@@ -201,11 +204,16 @@ public class NamingRequestHandler implements Runnable{
 		String name = entryObj.get("IP").asString();
 		Long UUID = new Long(entryObj.get("UUID").asString());
 
+		System.out.printf("[NamingRequestHandler]: recovered ("+name+" - "+UUID+")%n");
+		
 		recordName(name, UUID);
 	    }
+
+	    // record my name
+	    recordName(Inet4Address.getLocalHost().getHostAddress(), SocketRegistry.getInstance().getMachineUUID());
 		
 	}catch(Exception e){
-	    e.printStackTrace();
+	    System.out.printf("[NamingRequestHandler]: no status to recover%n");
 	    return;
 	}
 	

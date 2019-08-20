@@ -39,7 +39,7 @@ class MainTest {
 		    System.out.printf("[MessageReceived]: "+msgs+"%n");
 		    
 		    // example of reply
-		    Message msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST, 1);
+		    Message msg = new Message(receivedMessage.getSenderID(), "risposta", MessageType.RESPONDTOPREPAREREQUEST);
 
 		    System.out.printf("[MessageSent]: "+msg.getJSON()+"%n");
 		    
