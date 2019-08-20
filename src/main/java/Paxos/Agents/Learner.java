@@ -45,7 +45,7 @@ public class Learner {
         System.out.println("aggiorno round e sono "+currentNumOfVoter+" con valore "+ data.getCurrentValue());
         currentNumOfVoter = 0;
         data.reset();
-        data.nextRound();
+        //data.nextRound();
     }
 
     synchronized private void learn(String s){
