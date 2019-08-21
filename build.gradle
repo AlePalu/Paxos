@@ -14,6 +14,15 @@ sourceSets{
 			srcDirs = ['src/main/resources']
 		}
 	}
+
+	test{
+		java{
+			srcDirs = ['src/test/java']
+		}
+		resources{
+			srcDirs = ['src/test/resources']
+		}
+	}
 }
 
 repositories {
@@ -42,29 +51,62 @@ task NetworkJar(type: Jar){
 }
 tasks.jar.dependsOn(NetworkJar)
 
-task NetworkJarTest(type: Jar){
-     from(sourceSets.main.output){
-	include 'Paxos/Network/*.class'
-	include 'Paxos/NetworkTest/*.class'
-     }
-     manifest{
-	attributes('Main-Class':'Paxos.NetworkTest.MainTest')
-     }
-     baseName = project.name + '-NetworkTest'
-     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-     with jar
-}
-tasks.jar.dependsOn(NetworkJarTest)
-
-task PaxosJarTest(type: Jar){
-     from(sourceSets.main.output){
+task PaxosJarFaultTestNaming(type: Jar){
+     from(sourceSets.test.output){
 	include 'Paxos/**/*.class'
      }
      manifest{
-	attributes('Main-Class':'Paxos.PaxosTest.Test')
+	attributes('Main-Class':'Paxos.PaxosWithFault.NamingFaultMachine')
      }
-     baseName = project.name + '-PaxosTest'
+     baseName = 'PaxosJarFaultNaming'
      from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
      with jar
 }
-tasks.jar.dependsOn(PaxosJarTest)
+
+task PaxosJarTestNaming(type: Jar){
+     from(sourceSets.test.output){
+	include 'Paxos/**/*.class'
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.PaxosNormalTest.NamingMachine')
+     }
+     baseName = 'PaxosJarNaming'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+
+task PaxosJarTestNoProp(type: Jar){
+     from(sourceSets.test.output){
+	include 'Paxos/PaxosWithFault/*.class'
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.PaxosWithFault.NotProposeMachine')
+     }
+     baseName = 'PaxosJarFaultNotPropose'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+
+task PaxosJarTestProp2(type: Jar){
+     from(sourceSets.test.output){
+	include 'Paxos/**/*.class'
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.PaxosWithFault.ProposeMachine2')
+     }
+     baseName = 'PaxosJarFaultPropose2'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+
+task PaxosJarTestProp1(type: Jar){
+     from(sourceSets.test.output){
+	include 'Paxos/**/*.class'
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.PaxosWithFault.ProposeMachine1')
+     }
+     baseName = 'PaxosJarFaultPropose1'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
