@@ -58,20 +58,20 @@ public class AgentHandler implements Runnable {
 
     public void propose(String val, long proposeID){
         String propose;
-        Timer timer = new Timer();
+
         try {
             network.updateConnectedProcessesList();
             this.data.setNumOfProces(network.lookupConnectedProcesses().size());
         }catch(InterruptedException e){e.printStackTrace();}
-        timer.schedule(new TimerTask() {
+        data.getTimer().schedule(new TimerTask() {
             @Override
             public void run() {
                 if(data.getCurrentValue()== null) {
                     propose(val, proposeID + proposeID);
                 }
                 else {
-                    timer.cancel();
-                    timer.purge();
+                    data.getTimer().cancel();
+                    data.getTimer().purge();
                 }
             }
         },7000);

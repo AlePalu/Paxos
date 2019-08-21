@@ -26,7 +26,7 @@ public class Message{
     private Long proposeID;
     private String value;
     private String messageType; // type of agent to which this message is directed
-    private int round;
+    private Long round;
 
 
     // needed for internal operation
@@ -52,6 +52,8 @@ public class Message{
 	        this.value = jsonMessage.get(MessageField.VALUE.toString()).asString();
 	    if(!jsonMessage.get(MessageField.PROPOSEID.toString()).isNull())
 		this.proposeID = jsonMessage.get(MessageField.PROPOSEID.toString()).asLong();
+
+	    this.round = jsonMessage.get(MessageField.ROUND.toString()).asLong();
 
 	    // this is automatically inserted by the routing logic
 	    this.senderID = jsonMessage.get(MessageField.SENDERID.toString()).asLong();
@@ -80,6 +82,10 @@ public class Message{
 
     public String getMessageType(){
         return this.messageType;
+    }
+
+    public Long getRound(){
+        return this.round;
     }
 
     public String getJSON(){

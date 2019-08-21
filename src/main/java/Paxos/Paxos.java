@@ -72,6 +72,10 @@ public class Paxos {
         agent.propose(value,proposID);
     }
 
+    public static void reset(){
+
+    }
+
     public static String readConsensus(AgentHandler agent){
         return agent.readConsensus();
     }

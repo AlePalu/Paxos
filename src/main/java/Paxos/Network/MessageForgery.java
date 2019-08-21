@@ -190,23 +190,25 @@ public class MessageForgery{
 	return Jmessage.toString();
     }
 
-    public static String forgePREPAREREQUEST(long proposeid){
+    public static String forgePREPAREREQUEST(long proposeid, long round){
     	JsonObject Jmessage = new JsonObject();
 		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.PREPAREREQUEST.toString());
 		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
 		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+		Jmessage.add(MessageField.ROUND.toString(),round);
 
 		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
 
 		return Jmessage.toString();
 	}
 
-	public static String forgeRESPONDTOPREPAREREQUEST(long recipientID, long proposeid){
+	public static String forgeRESPONDTOPREPAREREQUEST(long recipientID, long proposeid, long round){
 		JsonObject Jmessage = new JsonObject();
 		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.RESPONDTOPREPAREREQUEST.toString());
 		Jmessage.add(MessageField.RECIPIENTID.toString(),recipientID);
 		Jmessage.add(MessageField.PROPOSEID.toString(),proposeid);
 		Jmessage.add(MessageField.VALUE.toString(),(String)null);
+		Jmessage.add(MessageField.ROUND.toString(),round);
 
 
 		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
@@ -214,21 +216,23 @@ public class MessageForgery{
 		return Jmessage.toString();
 	}
 
-	public static String forgeACCEPTREQUEST(long proposeID, String value){
+	public static String forgeACCEPTREQUEST(long proposeID, String value, long round){
 		JsonObject Jmessage = new JsonObject();
 		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.ACCEPTREQUEST.toString());
 		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
 		Jmessage.add(MessageField.VALUE.toString(),value);
+		Jmessage.add(MessageField.ROUND.toString(),round);
 
 		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
 		return Jmessage.toString();
 	}
 
-	public static String forgeDECISION(long proposeID, String value){
+	public static String forgeDECISION(long proposeID, String value, long round){
 		JsonObject Jmessage = new JsonObject();
 		Jmessage.add(MessageField.MSGTYPE.toString(), MessageType.DECISION.toString());
 		Jmessage.add(MessageField.PROPOSEID.toString(),proposeID);
 		Jmessage.add(MessageField.VALUE.toString(),value);
+		Jmessage.add(MessageField.ROUND.toString(),round);
 
 		Jmessage.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
 		return Jmessage.toString();

@@ -32,7 +32,7 @@ public class Test {
 
         a3.propose("java is wonderful",250);
 
-        //Thread.sleep(1000);
+        Thread.sleep(3000);
         a2.propose("java sucks",12);
 
 	    // Thread.sleep(1000);

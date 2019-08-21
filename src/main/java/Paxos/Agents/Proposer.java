@@ -2,14 +2,10 @@ package Paxos.Agents;
 
 import Paxos.Network.MessageForgery;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 public class Proposer {
 
     private int currentNumOfVoter;
-    private boolean win;
     private PaxosData data;
     private String proposedValue;
     private long proposeID;
@@ -17,7 +13,6 @@ public class Proposer {
     Proposer(PaxosData data){
         this.data = data;
         this.currentNumOfVoter =0;
-        this.win = false;
         this.proposedValue = null;
     }
 
@@ -27,17 +22,17 @@ public class Proposer {
         this.proposedValue = val;
         this.currentNumOfVoter = 0;
        
-        return MessageForgery.forgePREPAREREQUEST(proposeID);
+        return MessageForgery.forgePREPAREREQUEST(proposeID, data.getRound());
     }
 
     String processRespondToPrepareRequest() {
         System.out.println("[Proposer "+data.getId() + " ]: receive a vote for: "+ this.proposeID);
         currentNumOfVoter++;
-        if (currentNumOfVoter > data.getNumOfProces()/2 && !this.win) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && !data.getProposewin()) {
             System.out.println("[Proposer]: my propose win: "+ this.proposedValue);
             //data.setwin();
-            win = true;
-            return MessageForgery.forgeACCEPTREQUEST(this.proposeID,this.proposedValue);
+            data.setProposewin();
+            return MessageForgery.forgeACCEPTREQUEST(this.proposeID,this.proposedValue,data.getRound());
         }
         else
             return null;
