@@ -1,0 +1,71 @@
+\documentclass{beamer}
+\title{Reaching distributed consensus: Paxos}
+\author{Alessandro Palummo, Marco Prosdocimi}
+\date{oggi}
+
+\begin{document}
+
+\begin{frame}
+  \maketitle
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Network Infrastructure}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Main Characteristics}
+
+  \begin{itemize}
+  \item NAME SERVER
+  \item DISCOVER
+  \item NETWORK UPDATE
+  \item FAULT TOLERANCE
+  \item PAXOS
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Name Server}
+  \begin{itemize}
+  \item Network node keeps track of machine references (IP address) on network.
+  \item Names are managed according to a flat naming scheme. Each name entry is composed by the pair \newline[IP, Machine-UUID (required for fault tolerance)]
+  \item Every machine keep a reference to it, in order to retrieve the most updated view of the active nodes
+  \item When a node wants to get the list of currently connected machines on network, sends a NAMINGREQUEST to the name server, which in turn will replay a NAMINGRESPONSE
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Discovering rocesses on network}
+  \begin{itemize}
+  \item in order to properly works Paxos needs to know how many processes are currently present on the network.
+  \item before start, a NAMINGREQUEST is sent, to get the list of currently active machines.
+  \item process starts sending a DISCOVERREQUEST to its local network infrastructure, which in turn immediately replies with the list of local processes (DISCOVERRESPONSE), and than sends to all other remote nodes a DISCOVER message. These will reply with a DISCOVERRESPONSE, containig the UUID of the processes currently hosted on the machine.
+  \item when \textbf{all known active nodes} have send their DISCOVERRESPONSE, the overall list of known processes is returned back to the caller
+  \item The process is synchronous, this means the caller is blocked until all the nodes on network have sent their responses
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Network Update}
+  \begin{itemize}
+  \item we need to react to both processes and machine faults, so to keep a coherent state of the network
+  \item the name server periodically PINGs all the machine. If a response to a PING is received before a given timeout, it's considered alive. Otherwise we can consider it death and remove its reference.
+  \item each network infrastructure periodically PINGs the processes currently connected. A process is considered death if response to such PING is not received before a timeout
+  \item both have effects on NAMINGREPLY and DISCOVERREPLY messages
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Fault Tolerance}
+  \begin{itemize}
+  \item name server is a crucial and centralized component. If it fails, the entire network fails too (no response to NAMINGREQUEST nor to DISCOVER)
+  \item we have implemented a bully election mechanism so to recover the name service in case of fault
+  \item each node logs in a file the last NAMINGREPLY received
+  \item the elected node will launch a new name server process, and take as network state the one stored in the log
+  \end{itemize}
+\end{frame}
+  
+\end{document}

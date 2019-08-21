@@ -39,3 +39,14 @@ out/
 
 # ignore txt files
 *.txt
+
+# ignore TEX output
+auto/
+*.aux
+*.log
+*.nav
+*.out
+*.pdf
+*.snm
+*.synctex.gz
+*.toc
