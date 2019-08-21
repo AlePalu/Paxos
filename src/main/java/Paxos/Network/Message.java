@@ -32,14 +32,6 @@ public class Message{
     // needed for internal operation
     private Boolean isBroadcast;
 
-    // used when you want to send a message
-    public Message(Long recipientID, String value, MessageType messageType){
-        this.recipientID = recipientID;
-        this.value = value;
-        this.messageType = messageType.toString();
-        this.isBroadcast = false;
-    }
-
     // used to build the object from a JSON message, users interact with Message objects not JSON strings!
     public Message(String message){
         JsonObject jsonMessage = Json.parse(message).asObject();
@@ -86,21 +78,5 @@ public class Message{
 
     public Long getRound(){
         return this.round;
-    }
-
-    public String getJSON(){
-        JsonObject jsonMessageFormat = new JsonObject();
-        if(this.recipientID!=null) // broadcast messages don't require a recipientID
-            jsonMessageFormat.add(MessageField.RECIPIENTID.toString(), this.recipientID);
-        jsonMessageFormat.add(MessageField.VALUE.toString(), this.value);
-        jsonMessageFormat.add(MessageField.MSGTYPE.toString(), this.messageType);
-        jsonMessageFormat.add(MessageField.ROUND.toString(), this.round);
-
-        if(this.isBroadcast)
-            jsonMessageFormat.add(MessageField.FORWARDTYPE.toString(), ForwardType.BROADCAST.toString());
-        else
-            jsonMessageFormat.add(MessageField.FORWARDTYPE.toString(), ForwardType.UNICAST.toString());
-
-        return jsonMessageFormat.toString();
     }
 }
