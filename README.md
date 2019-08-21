@@ -175,3 +175,13 @@ MESSAGENAME("MESSAGENAME", (s,m) -> MessageType.forwardTo(s,m))
 ```
 
 consumer will then be able to send and receive messages with that kind of identifier.
+
+
+
+## Copyright
+
+All code was witten by:
+Alessandro Palummo https://github.com/AlePalu,
+Marco Prosdocimi.
+For Distributed System project,
+Politecnico di Milano 2019
