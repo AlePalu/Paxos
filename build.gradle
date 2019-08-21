@@ -110,3 +110,17 @@ task PaxosJarTestProp1(type: Jar){
      from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
      with jar
 }
+
+task PaxosJarTestNet(type: Jar){
+     from(sourceSets.test.output){
+	include 'Paxos/**/*.class'
+     }
+     manifest{
+	attributes('Main-Class':'Paxos.NetworkTest.Test')
+     }
+     baseName = 'PaxosJarTestNet'
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+     with jar
+}
+
+
