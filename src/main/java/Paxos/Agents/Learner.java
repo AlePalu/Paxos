@@ -26,11 +26,10 @@ public class Learner {
     }
 
     synchronized void processDecisionRequest(Message m){
-        //if(data.getRound() == m.getRound())
+        if(data.getRound() == m.getRound())
             currentNumOfVoter++;
         System.out.println("[Learner "+ data.getId()+"] receive a decision with ID: "+m.getProposeID()+" and Value: "+m.getValue());
         if (currentNumOfVoter > data.getNumOfProces()/2 && !data.getLearnerwin() && data.getRound() == m.getRound()) {
-            //System.out.println("round "+data.getRound()+" round messaggio "+m.getRound() +" "+m.getValue()+" sono il "+currentNumOfVoter);
             System.out.println("[Learner "+ data.getId()+"] majority for: "+m.getProposeID()+" and Value: "+m.getValue());
             data.setLearnerwin();
             data.setCurrentValue(m.getValue());
@@ -40,7 +39,7 @@ public class Learner {
     }
 
     synchronized private void reset(){
-        System.out.println("aggiorno round e sono "+currentNumOfVoter+" con valore "+ data.getCurrentValue());
+        System.out.println("[Learner "+ data.getId()+"] new Round");
         currentNumOfVoter = 0;
         data.reset();
         data.nextRound();

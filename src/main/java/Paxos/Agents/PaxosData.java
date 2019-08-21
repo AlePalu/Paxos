@@ -13,6 +13,7 @@ public class PaxosData {
     private boolean learnerwin;
     private Timer timer;
     private long acceptorBound;
+    private int proposecurrentvote;
 
     public PaxosData(int numOfProces, long id){
         this.currentValue= null;
@@ -23,6 +24,7 @@ public class PaxosData {
         this.learnerwin=false;
         this.timer = new Timer();
         this.acceptorBound=0;
+        this.proposecurrentvote=0;
 
     }
 
@@ -34,6 +36,7 @@ public class PaxosData {
         this.timer.purge();
         this.timer = new Timer();
         this.acceptorBound=0;
+        this.proposecurrentvote=0;
     }
 
     long getId() {
@@ -56,7 +59,13 @@ public class PaxosData {
         return numOfProces;
     }
 
+    int getProposecurrentvote(){
+        return this.proposecurrentvote;
+    }
 
+    void incProposecuttentvote(){
+        this.proposecurrentvote++;
+    }
     void nextRound(){ this.round++; }
 
     int getRound(){
@@ -73,6 +82,10 @@ public class PaxosData {
 
     Timer getTimer(){
         return timer;
+    }
+
+    void reserCurrentvote(){
+        this.proposecurrentvote=0;
     }
 
     void setProposewin(){
