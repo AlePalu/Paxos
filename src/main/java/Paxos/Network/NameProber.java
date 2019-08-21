@@ -102,7 +102,7 @@ class NameProberExecutor implements Runnable{
     public void sendBroadcastMsg(DatagramPacket message){	
 	String msg = new String(message.getData(), 0, message.getLength());
 	try{
-	    InetAddress addr = InetAddress.getByName("192.168.1.255");
+	    InetAddress addr = InetAddress.getByName("192.168.43.255");
 	    DatagramPacket packet = new DatagramPacket(msg.getBytes(), msg.length(), addr, 40001);
 
 	    //recordMsg(packet);
