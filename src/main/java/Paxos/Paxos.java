@@ -10,12 +10,15 @@ public class Paxos {
     public static boolean isnetworksSarted = false;
 
     public static void init(Boolean isNaming){
-        String[] args = new String[1];
-        args[0]="-n";
-        if(isNaming)
+        if(isNaming){
+	    String[] args = new String[1];
+	    args[0]="-n";
             Main.main(args);
-        else
-            Main.main(null);
+	}
+        else{
+	    String[] args = new String[0];
+            Main.main(args);
+	}
         isnetworksSarted = true;
         try{Thread.sleep(2000);}
         catch(Exception e){}
