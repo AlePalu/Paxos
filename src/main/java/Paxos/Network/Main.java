@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-class Main{
+public class Main{
     
     public static void main(String[] args) {		
 	System.out.printf("[Main]: started\n");

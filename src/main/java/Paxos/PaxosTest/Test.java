@@ -11,7 +11,6 @@ public class Test {
     public static void main(String[] args) throws Exception{
         Scanner s = new Scanner(System.in);
         Random rng = new Random();
-
         AgentHandler a1 = new AgentHandler((long)rng.nextLong(),"./src/main/java/Paxos/PaxosTest/");
         Thread t = new Thread(a1);
         t.start();
