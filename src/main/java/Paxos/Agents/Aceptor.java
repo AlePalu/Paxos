@@ -17,7 +17,7 @@ public class Aceptor {
         if(m.getProposeID() >= data.getAcceptorBound() && data.getCurrentValue() == null && data.getRound() == m.getRound()) {
             System.out.println("[Acceptor "+data.getId() + " ]: make a promise for ID: "+ m.getProposeID());
             data.setAcceptorBound(m.getProposeID());
-            return MessageForgery.forgeRESPONDTOPREPAREREQUEST(m.getSenderID(),m.getProposeID(),data.getRound());
+            return MessageForgery.forgeRESPONDTOPREPAREREQUEST(m.getSenderID(),m.getProposeID(),m.getRound());
         }
         return null;
     }
@@ -28,7 +28,7 @@ public class Aceptor {
             System.out.println("[Acceptor "+data.getId() + " ]: i can't accept");
             return null;
         }
-        return MessageForgery.forgeDECISION(m.getProposeID(),m.getValue(),data.getRound());
+        return MessageForgery.forgeDECISION(m.getProposeID(),m.getValue(),m.getRound());
     }
 
 

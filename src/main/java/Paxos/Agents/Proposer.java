@@ -30,7 +30,7 @@ public class Proposer {
         if (data.getProposecurrentvote() > data.getNumOfProces()/2 && !data.getProposewin()) {
             System.out.println("[Proposer]: my propose win: "+ this.proposedValue);
             data.setProposewin();
-            return MessageForgery.forgeACCEPTREQUEST(this.proposeID,this.proposedValue,data.getRound());
+            return MessageForgery.forgeACCEPTREQUEST(this.proposeID,this.proposedValue,m.getRound());
         }
         else
             return null;
