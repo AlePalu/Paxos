@@ -88,6 +88,8 @@ public class AgentHandler implements Runnable {
 
     private void respons(Message m){
         String response = null;
+        if(m.getRound()!= data.getRound())
+            return;
         try {
             switch (m.getMessageType()) {
                 case "PREPAREREQUEST":

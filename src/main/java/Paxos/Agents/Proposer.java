@@ -25,7 +25,6 @@ public class Proposer {
 
     String processRespondToPrepareRequest(Message m) {
         System.out.println("[Proposer "+data.getId() + " ]: receive a vote for: "+ this.proposeID);
-        if(m.getRound() == data.getRound())
             data.incProposecuttentvote();
         if (data.getProposecurrentvote() > data.getNumOfProces()/2 && !data.getProposewin()) {
             System.out.println("[Proposer]: my propose win: "+ this.proposedValue);

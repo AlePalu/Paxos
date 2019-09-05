@@ -26,10 +26,9 @@ public class Learner {
     }
 
     synchronized void processDecisionRequest(Message m){
-        if(data.getRound() == m.getRound())
             currentNumOfVoter++;
         System.out.println("[Learner "+ data.getId()+"] receive a decision with ID: "+m.getProposeID()+" and Value: "+m.getValue());
-        if (currentNumOfVoter > data.getNumOfProces()/2 && !data.getLearnerwin() && data.getRound() == m.getRound()) {
+        if (currentNumOfVoter > data.getNumOfProces()/2 && !data.getLearnerwin()) {
             System.out.println("[Learner "+ data.getId()+"] majority for: "+m.getProposeID()+" and Value: "+m.getValue());
             data.setLearnerwin();
             data.setCurrentValue(m.getValue());

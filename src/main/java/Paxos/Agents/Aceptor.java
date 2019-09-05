@@ -14,7 +14,7 @@ public class Aceptor {
 
     String processPrepareRequest(Message m){
         System.out.println("[Acceptor "+data.getId() + " ]: receive propose with ID: "+ m.getProposeID());
-        if(m.getProposeID() >= data.getAcceptorBound() && data.getCurrentValue() == null && data.getRound() == m.getRound()) {
+        if(m.getProposeID() >= data.getAcceptorBound() && data.getCurrentValue() == null) {
             System.out.println("[Acceptor "+data.getId() + " ]: make a promise for ID: "+ m.getProposeID());
             data.setAcceptorBound(m.getProposeID());
             return MessageForgery.forgeRESPONDTOPREPAREREQUEST(m.getSenderID(),m.getProposeID(),m.getRound());
@@ -24,7 +24,7 @@ public class Aceptor {
 
     String processAcceptRequest(Message m) {
         System.out.println("[Acceptor "+data.getId() + " ]: receive Value: "+m.getValue()+ " with ID: "+ m.getProposeID());
-        if (m.getProposeID() < data.getAcceptorBound() && data.getRound() == m.getRound()) {
+        if (m.getProposeID() < data.getAcceptorBound()) {
             System.out.println("[Acceptor "+data.getId() + " ]: i can't accept");
             return null;
         }
