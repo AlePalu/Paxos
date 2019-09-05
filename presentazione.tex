@@ -1,7 +1,7 @@
 \documentclass{beamer}
 \title{Reaching distributed consensus: Paxos}
 \author{Alessandro Palummo, Marco Prosdocimi}
-\date{oggi}
+
 
 \begin{document}
 
@@ -11,18 +11,34 @@
 
 \begin{frame}
   \frametitle{The Network Infrastructure}
-  
+  \begin{figure}
+    \centering
+    \includegraphics[scale=0.2]{netInfr.jpg}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The run time architecture}
+  \begin{itemize}
+  \item The network is mainly P2P (there is a central name server, but it can be relocated on whatever node as a result of a fault)
+  \item We have mainly 3 components composing the network:
+    \begin{itemize}
+    \item one local network infrastructure for each physical node, responsable to handle the traffic for the entire node
+    \item one process network handler for each application-level process, which interacts with the local network infrastructure and is responsable to handle the ingoing and outgoing traffic for it
+    \item one name service process unique for the entire network
+    \end{itemize}
+  \item All the communication primitives are implemented using only sockets (no RMI), and processes exchange only JSON formatted strings. 
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{Main Characteristics}
-
   \begin{itemize}
-  \item NAME SERVER
-  \item DISCOVER
-  \item NETWORK UPDATE
-  \item FAULT TOLERANCE
-  \item PAXOS
+  \item name server
+  \item discovering processes on network
+  \item network update
+  \item fault tolerance
+  \item paxos
   \end{itemize}
 
 \end{frame}
@@ -30,19 +46,19 @@
 \begin{frame}
   \frametitle{Name Server}
   \begin{itemize}
-  \item Network node keeps track of machine references (IP address) on network.
+  \item Network node keeping track of machine references (IP address) on network.
   \item Names are managed according to a flat naming scheme. Each name entry is composed by the pair \newline[IP, Machine-UUID (required for fault tolerance)]
   \item Every machine keep a reference to it, in order to retrieve the most updated view of the active nodes
-  \item When a node wants to get the list of currently connected machines on network, sends a NAMINGREQUEST to the name server, which in turn will replay a NAMINGRESPONSE
+  \item When a node wants to get the list of currently connected machines on network, sends a NAMINGREQUEST to the name server, which in turn will reply a NAMINGRESPONSE
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Discovering rocesses on network}
+  \frametitle{Discovering processes on network}
   \begin{itemize}
   \item in order to properly works Paxos needs to know how many processes are currently present on the network.
   \item before start, a NAMINGREQUEST is sent, to get the list of currently active machines.
-  \item process starts sending a DISCOVERREQUEST to its local network infrastructure, which in turn immediately replies with the list of local processes (DISCOVERRESPONSE), and than sends to all other remote nodes a DISCOVER message. These will reply with a DISCOVERRESPONSE, containig the UUID of the processes currently hosted on the machine.
+  \item process starts sending a DISCOVERREQUEST to its local network infrastructure, which in turn immediately replies with the list of local processes (DISCOVERRESPONSE), and then sends to all other remote nodes a DISCOVER message. These will reply with a DISCOVERRESPONSE, containig the UUID of the processes currently hosted on the machine.
   \item when \textbf{all known active nodes} have send their DISCOVERRESPONSE, the overall list of known processes is returned back to the caller
   \item The process is synchronous, this means the caller is blocked until all the nodes on network have sent their responses
   \end{itemize}
@@ -67,5 +83,11 @@
   \item the elected node will launch a new name server process, and take as network state the one stored in the log
   \end{itemize}
 \end{frame}
-  
+
+\begin{frame}
+  \begin{center}
+    \huge On top of this runs Paxos
+  \end{center}
+\end{frame}
+
 \end{document}
