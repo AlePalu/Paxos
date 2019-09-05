@@ -94,7 +94,7 @@ public class AgentHandler implements Runnable {
                     response = a.processPrepareRequest(m);
                     break;
                 case "RESPONDTOPREPAREREQUEST":
-                    response = p.processRespondToPrepareRequest();
+                    response = p.processRespondToPrepareRequest(m);
                     break;
                 case "ACCEPTREQUEST":
                     response = a.processAcceptRequest(m);
